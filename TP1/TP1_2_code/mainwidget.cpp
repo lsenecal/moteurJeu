@@ -59,14 +59,21 @@
 MainWidget::MainWidget(QWidget *parent) :
     QOpenGLWidget(parent),
     geometries(0),
-    texture(0),
+    texture_grass(0),
+    texture_rock(0),
+    texture_snow(0),
+    heightMap(0),
     angularSpeed(0)
 {
-    QVector3D eye = QVector3D(0.0, 0.0, 20.0);
+    eye = QVector3D(0.0, 10.0, 10.0);
     QVector3D center = QVector3D(0.0, 0.0, 0.0);
-    QVector3D up = QVector3D(0.0, 1.0, 0.0);
+    lForward = (center - eye).normalized();
+    lRight = QVector3D(1.0, 0.0, 0.0);
+    lUp = QVector3D::crossProduct(lRight, lForward).normalized();
 
-    View.lookAt(eye, center, up);
+    this->resize(1280, 720);
+
+    View.lookAt(eye, center, lUp);
 }
 
 MainWidget::~MainWidget()
@@ -74,7 +81,10 @@ MainWidget::~MainWidget()
     // Make sure the context is current when deleting the texture
     // and the buffers.
     makeCurrent();
-    delete texture;
+    delete texture_grass;
+    delete texture_rock;
+    delete texture_snow;
+    delete heightMap;
     delete geometries;
     doneCurrent();
 }
@@ -108,45 +118,47 @@ void MainWidget::mouseReleaseEvent(QMouseEvent *e)
 void MainWidget::keyPressEvent(QKeyEvent* e)
 {
     if (e->key() == Qt::Key_Z)
-    {
-        QVector3D forward;
-        forward.setX(View.column(2).x());
-        forward.setY(View.column(2).y());
-        forward.setZ(View.column(2).z());
-        forward.normalize();
-        View.translate(0.5 * forward);
-        update();
-    }
+        fFlag = true;
     else if (e->key() == Qt::Key_S)
-    {
-        QVector3D forward;
-        forward.setX(View.column(2).x());
-        forward.setY(View.column(2).y());
-        forward.setZ(View.column(2).z());
-        forward.normalize();
-        View.translate(-0.5 * forward);
-        update();
-    }
+        bFlag = true;
+
+    if (e->key() == Qt::Key_D)
+        rFlag = true;
     else if (e->key() == Qt::Key_Q)
-    {
-        QVector3D right;
-        right.setX(View.column(0).x());
-        right.setY(View.column(0).y());
-        right.setZ(View.column(0).z());
-        right.normalize();
-        View.translate(-0.5 * right);
-        update();
-    }
-    else if (e->key() == Qt::Key_D)
-    {
-        QVector3D right;
-        right.setX(View.column(0).x());
-        right.setY(View.column(0).y());
-        right.setZ(View.column(0).z());
-        right.normalize();
-        View.translate(0.5 * right);
-        update();
-    }
+        lFlag = true;
+
+    if (e->key() == Qt::Key_A)
+        lrFlag = true;
+    else if(e->key() == Qt::Key_E)
+        rrFlag = true;
+
+    if (e->key() == Qt::Key_Space)
+        uFlag = true;
+    else if (e->key() == Qt::Key_Control)
+        dFlag = true;
+}
+
+void MainWidget::keyReleaseEvent(QKeyEvent* e) {
+
+    if (e->key() == Qt::Key_Z)
+        fFlag = false;
+    else if (e->key() == Qt::Key_S)
+        bFlag = false;
+
+    if (e->key() == Qt::Key_D)
+        rFlag = false;
+    else if (e->key() == Qt::Key_Q)
+        lFlag = false;
+
+    if (e->key() == Qt::Key_A)
+        lrFlag = false;
+    else if(e->key() == Qt::Key_E)
+        rrFlag = false;
+
+    if (e->key() == Qt::Key_Space)
+        uFlag = false;
+    else if (e->key() == Qt::Key_Control)
+        dFlag = false;
 }
 
 std::ostream& operator<< (std::ostream& os, const QVector3D& v);
@@ -154,29 +166,24 @@ std::ostream& operator<< (std::ostream& os, const QVector3D& v);
 void MainWidget::mouseMoveEvent(QMouseEvent *e)
 {
     QVector2D diff = QVector2D(e->localPos()) - mousePressPosition;
-    qreal angleY = qAtan(diff.y());
-    qreal angleX = qAtan(diff.x());
+    qreal angleX = 0.2*qAtan(diff.x());
+    qreal angleY = 0.2*qAtan(diff.y());
 
-    QVector3D up;
-    up.setX(View.column(1).x());
-    up.setY(View.column(1).y());
-    up.setZ(View.column(1).z());
-    up.normalize();
+    //std::cout << angleX << std::endl;
 
-    QVector3D right;
-    right.setX(View.column(0).x());
-    right.setY(View.column(0).y());
-    right.setZ(View.column(0).z());
-    right.normalize();
+    QMatrix4x4 M;
+    M.setToIdentity();
+    M.rotate(-angleX, lUp);
+    M.rotate(-angleY, lRight);
+    lRight = M*lRight;
+    lForward = M*lForward;
+    M.rotate(-angleY, lRight);
 
-    View.rotate(angleX, up);
+    QVector3D center = eye + lForward;
+    lUp = QVector3D::crossProduct(lRight, lForward).normalized();
 
-    /*QVector3D right;
-    right.setX(View.column(0).x());
-    right.setY(View.column(0).y());
-    right.setZ(View.column(0).z());
-    right.normalize();
-    View.rotate(angleY, right);*/
+    View.setToIdentity();
+    View.lookAt(eye, center, lUp);
 }
 
 //! [0]
@@ -184,19 +191,43 @@ void MainWidget::mouseMoveEvent(QMouseEvent *e)
 //! [1]
 void MainWidget::timerEvent(QTimerEvent *)
 {
-    // Decrease angular speed (friction)
-    angularSpeed *= 0.99;
+    if (fFlag)
+        eye += speed * lForward;
+    else if (bFlag)
+        eye -= speed * lForward;
 
-    // Stop rotation when speed goes below threshold
-    if (angularSpeed < 0.01) {
-        angularSpeed = 0.0;
-    } else {
-        // Update rotation
-        rotation = QQuaternion::fromAxisAndAngle(rotationAxis, angularSpeed) * rotation;
+    if (rFlag)
+        eye += speed * lRight;
+    else if (lFlag)
+        eye -= speed * lRight;
 
-        // Request an update
-        update();
-    }
+     if (lrFlag) {
+        QMatrix4x4 M;
+        M.setToIdentity();
+        M.rotate(-1, lForward);
+        lUp = M*lUp;
+        lRight = M*lRight;
+     }
+     else if(rrFlag) {
+        QMatrix4x4 M;
+        M.setToIdentity();
+        M.rotate(1, lForward);
+        lUp = M*lUp;
+        lRight = M*lRight;
+     }
+
+     if (uFlag)
+        eye += speed * lUp;
+     else if (dFlag)
+        eye -= speed * lUp;
+
+    QVector3D center = eye + lForward;
+    lUp = QVector3D::crossProduct(lRight, lForward).normalized();
+    View.setToIdentity();
+    View.lookAt(eye, center, lUp);
+
+    Model.rotate(0.1f, QVector3D(0.0f, 1.0f, 0.0f));
+    update();
 }
 //! [1]
 
@@ -248,17 +279,32 @@ void MainWidget::initShaders()
 void MainWidget::initTextures()
 {
     // Load cube.png image
-    texture = new QOpenGLTexture(QImage(":cube.png").mirrored());
+    texture_grass = new QOpenGLTexture(QImage(":grass.png").mirrored());
 
     // Set nearest filtering mode for texture minification
-    texture->setMinificationFilter(QOpenGLTexture::Nearest);
+    texture_grass->setMinificationFilter(QOpenGLTexture::Nearest);
 
     // Set bilinear filtering mode for texture magnification
-    texture->setMagnificationFilter(QOpenGLTexture::Linear);
+    texture_grass->setMagnificationFilter(QOpenGLTexture::Linear);
 
     // Wrap texture coordinates by repeating
     // f.ex. texture coordinate (1.1, 1.2) is same as (0.1, 0.2)
-    texture->setWrapMode(QOpenGLTexture::Repeat);
+    texture_grass->setWrapMode(QOpenGLTexture::Repeat);
+
+    texture_rock = new QOpenGLTexture(QImage(":rock.png").mirrored());
+    texture_rock->setMagnificationFilter(QOpenGLTexture::Nearest);
+    texture_rock->setMagnificationFilter(QOpenGLTexture::Linear);
+    texture_rock->setWrapMode(QOpenGLTexture::Repeat);
+
+    texture_snow = new QOpenGLTexture(QImage(":snowrocks.png").mirrored());
+    texture_snow->setMagnificationFilter(QOpenGLTexture::Nearest);
+    texture_snow->setMagnificationFilter(QOpenGLTexture::Linear);
+    texture_snow->setWrapMode(QOpenGLTexture::Repeat);
+
+    heightMap = new QOpenGLTexture(QImage(":heightmap.png"));
+    heightMap->setMinificationFilter(QOpenGLTexture::Nearest);
+    heightMap->setMagnificationFilter(QOpenGLTexture::Linear);
+    heightMap->setWrapMode(QOpenGLTexture::Repeat);
 }
 //! [4]
 
@@ -269,7 +315,7 @@ void MainWidget::resizeGL(int w, int h)
     qreal aspect = qreal(w) / qreal(h ? h : 1);
 
     // Set near plane to 3.0, far plane to 7.0, field of view 45 degrees
-    const qreal zNear = 1.0, zFar = 100.0, fov = 45.0;
+    const qreal zNear = 1, zFar = 100.0, fov = 45.0;
 
     // Reset projection
     projection.setToIdentity();
@@ -284,7 +330,10 @@ void MainWidget::paintGL()
     // Clear color and depth buffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    texture->bind();
+    texture_grass->bind(0);
+    texture_rock->bind(1);
+    texture_snow->bind(2);
+    heightMap->bind(3);
 
 //! [6]
     // Calculate model view transformation
@@ -292,14 +341,24 @@ void MainWidget::paintGL()
     //matrix.translate(0.0, 0.0, -5.0);
     //matrix.rotate(rotation);
 
+    QVector3D eyeTest = View.column(3).toVector3D();
+    //std::cout << eyeTest.x() << " " <<  eyeTest.y() << " " << eyeTest.z() << std::endl;
+
     // Set modelview-projection matrix
-    program.setUniformValue("mvp_matrix", projection * View * Model);
+    program.setUniformValue("eyePos", eyeTest);
+    program.setUniformValue("model_matrix", Model);
+    program.setUniformValue("view_matrix", View);
+    program.setUniformValue("projection_matrix", projection);
 //! [6]
 
     // Use texture unit 0 which contains cube.png
-    program.setUniformValue("texture", 0);
+    program.setUniformValue("texture_grass", 0);
+    program.setUniformValue("texture_rock", 1);
+    program.setUniformValue("texture_snow", 2);
+    program.setUniformValue("heightMap", 3);
 
     // Draw cube geometry
     //geometries->drawCubeGeometry(&program);
     geometries->drawPlaneGeometry(&program);
+    //geometries->drawSphereGeometry(&program);
 }

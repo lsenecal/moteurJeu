@@ -77,6 +77,7 @@ protected:
     void mousePressEvent(QMouseEvent *e) override;
     void mouseReleaseEvent(QMouseEvent *e) override;
     void keyPressEvent(QKeyEvent* e) override;
+    void keyReleaseEvent(QKeyEvent* e) override;
     void mouseMoveEvent(QMouseEvent *e) override;
     void timerEvent(QTimerEvent *e) override;
 
@@ -92,7 +93,15 @@ private:
     QOpenGLShaderProgram program;
     GeometryEngine *geometries;
 
-    QOpenGLTexture *texture;
+    QOpenGLTexture* texture_grass;
+    QOpenGLTexture* texture_rock;
+    QOpenGLTexture* texture_snow;
+    QOpenGLTexture* heightMap;
+
+    QVector3D eye;
+    QVector3D lForward;
+    QVector3D lRight;
+    QVector3D lUp;
 
     QMatrix4x4 Model;
     QMatrix4x4 View;
@@ -102,6 +111,23 @@ private:
     QVector3D rotationAxis;
     qreal angularSpeed;
     QQuaternion rotation;
+
+    int width = 1280;
+    int height = 720;
+
+    // Flags
+    bool fFlag = false;
+    bool bFlag = false;
+    bool rFlag = false;
+    bool lFlag = false;
+    bool uFlag = false;
+    bool dFlag = false;
+    bool rrFlag = false;
+    bool lrFlag = false;
+
+    // Kinematic
+    float speed = 0.02f;
+
 };
 
 #endif // MAINWIDGET_H
