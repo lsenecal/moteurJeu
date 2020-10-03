@@ -52,6 +52,8 @@
 
 #include <QVector2D>
 #include <QVector3D>
+#include <QImage>
+#include <QtMath>
 #include <iostream>
 #include <fstream>
 
@@ -72,7 +74,9 @@ GeometryEngine::GeometryEngine()
     indexBuf.create();
 
     // Initializes cube geometry and transfers it to VBOs
-    initCubeGeometry();
+    //initCubeGeometry();
+    initPlaneGeometry();
+    //initSphereGeometry();
 }
 
 GeometryEngine::~GeometryEngine()
@@ -94,7 +98,7 @@ void GeometryEngine::initCubeGeometry()
     // duplicate vertex for each face because texture coordinate
     // is different.
 
-    /*VertexData vertices[] = {
+    VertexData vertices[] = {
         // Vertex data for face 0
         {QVector3D(-1.0f, -1.0f,  1.0f), QVector2D(0.0f, 0.0f)},  // v0
         {QVector3D( 1.0f, -1.0f,  1.0f), QVector2D(0.33f, 0.0f)}, // v1
@@ -130,44 +134,7 @@ void GeometryEngine::initCubeGeometry()
         {QVector3D( 1.0f,  1.0f,  1.0f), QVector2D(0.66f, 0.5f)}, // v21
         {QVector3D(-1.0f,  1.0f, -1.0f), QVector2D(0.33f, 1.0f)}, // v22
         {QVector3D( 1.0f,  1.0f, -1.0f), QVector2D(0.66f, 1.0f)}  // v23
-    };*/
-
-    QVector<VertexData> planeVertices;
-
-    std::fstream heightMap;
-    heightMap.open("heightmap-1024x1024.png", std::fstream::in);
-
-    unsigned int n = 64;
-    int z;
-	for (size_t i = 0; i < n; ++i)
-        for (size_t j = 0; j < n; ++j){
-            heightMap >> z;
-            planeVertices.push_back({ QVector3D((1.0f*j - n/2.0)*16.0/n, (1.0f*i - n/2.0)*16/n, 0.0), QVector2D(0.33f*j/(n-1), 0.5f*i/(n-1)) });
-            //std::cout << planeVertices.at(planeVertices.size() - 1).position << std::endl;
-        }
-
-    std::vector<GLushort> planeIndices;
-	
-    for (size_t j = 0; j < n-1; ++j) {
-        if (j != 0){
-            planeIndices.push_back(j*n + n);
-            //std::cout << planeIndices.at(planeIndices.size() - 1) << " ";
-        }
-		for (size_t i = 0; i < n; ++i) {
-            planeIndices.push_back(j*n + i + n);
-            planeIndices.push_back(j*n + i);
-            //std::cout << planeIndices.at(planeIndices.size() - 2) << " " << planeIndices.at(planeIndices.size() - 1) << " ";
-        }
-        if(j != n-1){
-            planeIndices.push_back((j+1)*n - 1);
-            //std::cout << planeIndices.at(planeIndices.size() - 1) << std::endl;
-        }
-	}
-
-    size = planeIndices.size();
-
-    //std::cout << planeVertices.size() << std::endl;
-    //std::cout << planeIndices.size() << std::endl;
+    };
 
     // Indices for drawing cube faces using triangle strips.
     // Triangle strips can be connected by duplicating indices
@@ -176,26 +143,148 @@ void GeometryEngine::initCubeGeometry()
     // index of the second strip needs to be duplicated. If
     // connecting strips have same vertex order then only last
     // index of the first strip needs to be duplicated.
-    /*GLushort indices[] = {
+    GLushort indices[] = {
          0,  1,  2,  3,  3,     // Face 0 - triangle strip ( v0,  v1,  v2,  v3)
          4,  4,  5,  6,  7,  7, // Face 1 - triangle strip ( v4,  v5,  v6,  v7)
          8,  8,  9, 10, 11, 11, // Face 2 - triangle strip ( v8,  v9, v10, v11)
         12, 12, 13, 14, 15, 15, // Face 3 - triangle strip (v12, v13, v14, v15)
         16, 16, 17, 18, 19, 19, // Face 4 - triangle strip (v16, v17, v18, v19)
         20, 20, 21, 22, 23      // Face 5 - triangle strip (v20, v21, v22, v23)
-    };*/
+    };
 
 //! [1]
     // Transfer vertex data to VBO 0
     arrayBuf.bind();
-    //arrayBuf.allocate(vertices, 24 * sizeof(VertexData));
+    arrayBuf.allocate(vertices, 24 * sizeof(VertexData));
+
+    // Transfer index data to VBO 1
+    indexBuf.bind();
+    indexBuf.allocate(indices, 34 * sizeof(GLushort));
+//! [1]
+}
+
+void GeometryEngine::initPlaneGeometry()
+{
+    QVector<VertexData> planeVertices;
+
+    unsigned int n = 64;
+    for (size_t i = 0; i < n; ++i)
+        for (size_t j = 0; j < n; ++j){
+            planeVertices.push_back({ QVector3D((1.0f*j - n/2.0), 0, -(1.0f*i - n/2.0)), QVector2D(1.0f*j/(n-1), 1.0f*i/(n-1)) });
+        }
+
+    QVector<GLushort> planeIndices;
+
+    for (size_t j = 0; j < n-1; ++j) {
+        if (j != 0){
+            planeIndices.push_back(static_cast<int>(j)*n + n);
+        }
+        for (size_t i = 0; i < n; ++i) {
+            planeIndices.push_back(static_cast<int>(j)*n + static_cast<int>(i) + n);
+            planeIndices.push_back(static_cast<int>(j)*n + static_cast<int>(i));
+        }
+        if(j != n-2){
+            planeIndices.push_back((static_cast<int>(j)+1)*n - 1);
+        }
+    }
+
+    size = planeIndices.size();
+
+    arrayBuf.bind();
     arrayBuf.allocate(planeVertices.data(), planeVertices.size() * sizeof(VertexData));
 
     // Transfer index data to VBO 1
     indexBuf.bind();
-    //indexBuf.allocate(indices, 34 * sizeof(GLushort));
     indexBuf.allocate(planeIndices.data(), planeIndices.size() * sizeof(GLushort));
-//! [1]
+}
+
+void GeometryEngine::initSphereGeometry()
+{
+    QVector<VertexData> vertices;
+    QVector<GLushort> indices;
+
+    float radius = 1.0f;
+    unsigned int sectorCount = 64;
+    unsigned int stackCount = 36;
+
+    float x, y, z, xy;                              // vertex position
+    //float nx, ny, nz, lengthInv = 1.0f / radius;    // vertex normal
+    float s, t;
+
+    float sectorStep = 2 * M_PI / sectorCount;
+    float stackStep = M_PI / stackCount;
+    float sectorAngle, stackAngle;
+
+    for(size_t i = 0; i <= stackCount; ++i)
+    {
+        stackAngle = M_PI / 2 - i * stackStep;        // starting from pi/2 to -pi/2
+        xy = radius * cosf(stackAngle);             // r * cos(u)
+        z = radius * sinf(stackAngle);              // r * sin(u)
+
+        // add (sectorCount+1) vertices per stack
+        // the first and last vertices have same position and normal, but different tex coords
+        for(size_t j = 0; j <= sectorCount; ++j)
+        {
+            sectorAngle = j * sectorStep;           // starting from 0 to 2pi
+
+            // vertex position (x, y, z)
+            x = xy * cosf(sectorAngle);             // r * cos(u) * cos(v)
+            y = xy * sinf(sectorAngle);             // r * cos(u) * sin(v)
+
+            // vertex tex coord (s, t) range between [0, 1]
+            s = (float)j / sectorCount;
+            t = (float)i / stackCount;
+
+            VertexData vd;
+            vd.position = QVector3D(x, y, z);
+            vd.texCoord = QVector2D(s,t);
+            vertices.push_back(vd);
+
+            // normalized vertex normal (nx, ny, nz)
+            /*nx = x * lengthInv;
+            ny = y * lengthInv;
+            nz = z * lengthInv;
+            normals.push_back(nx);
+            normals.push_back(ny);
+            normals.push_back(nz);*/
+        }
+    }
+
+    int k1, k2;
+    for(size_t i = 0; i < stackCount; ++i)
+    {
+        k1 = static_cast<int>(i) * (sectorCount + 1);     // beginning of current stack
+        k2 = k1 + sectorCount + 1;      // beginning of next stack
+
+        for(size_t j = 0; j < sectorCount; ++j, ++k1, ++k2)
+        {
+            // 2 triangles per sector excluding first and last stacks
+            // k1 => k2 => k1+1
+            if(i != 0)
+            {
+                indices.push_back(k1);
+                indices.push_back(k2);
+                indices.push_back(k1 + 1);
+            }
+
+            // k1+1 => k2 => k2+1
+            if(i != (stackCount-1))
+            {
+                indices.push_back(k1 + 1);
+                indices.push_back(k2);
+                indices.push_back(k2 + 1);
+            }
+        }
+    }
+
+    size = indices.size();
+
+    arrayBuf.bind();
+    arrayBuf.allocate(vertices.data(), vertices.size() * sizeof(VertexData));
+
+    // Transfer index data to VBO 1
+    indexBuf.bind();
+    indexBuf.allocate(indices.data(), indices.size() * sizeof(GLushort));
 }
 
 //! [2]
@@ -250,4 +339,30 @@ void GeometryEngine::drawPlaneGeometry(QOpenGLShaderProgram *program)
 
     // Draw cube geometry using indices from VBO 1
     glDrawElements(GL_TRIANGLE_STRIP, size, GL_UNSIGNED_SHORT, 0);
+}
+
+void GeometryEngine::drawSphereGeometry(QOpenGLShaderProgram *program)
+{
+    // Tell OpenGL which VBOs to use
+    arrayBuf.bind();
+    indexBuf.bind();
+
+    // Offset for position
+    quintptr offset = 0;
+
+    // Tell OpenGL programmable pipeline how to locate vertex position data
+    int vertexLocation = program->attributeLocation("a_position");
+    program->enableAttributeArray(vertexLocation);
+    program->setAttributeBuffer(vertexLocation, GL_FLOAT, offset, 3, sizeof(VertexData));
+
+    // Offset for texture coordinate
+    offset += sizeof(QVector3D);
+
+    // Tell OpenGL programmable pipeline how to locate vertex texture coordinate data
+    int texcoordLocation = program->attributeLocation("a_texcoord");
+    program->enableAttributeArray(texcoordLocation);
+    program->setAttributeBuffer(texcoordLocation, GL_FLOAT, offset, 2, sizeof(VertexData));
+
+    // Draw cube geometry using indices from VBO 1
+     glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_SHORT, 0);
 }
