@@ -117,73 +117,83 @@ void MainWidget::mouseReleaseEvent(QMouseEvent *e)
 
 void MainWidget::keyPressEvent(QKeyEvent* e)
 {
-    if (e->key() == Qt::Key_Z)
-        fFlag = true;
-    else if (e->key() == Qt::Key_S)
-        bFlag = true;
+    if (e->key() == Qt::Key_C && freeFlag)
+        freeFlag = false;
+    else if (e->key() == Qt::Key_C && !freeFlag)
+        freeFlag = true;
 
-    if (e->key() == Qt::Key_D)
-        rFlag = true;
-    else if (e->key() == Qt::Key_Q)
-        lFlag = true;
+    if (freeFlag) {
+        if (e->key() == Qt::Key_Z)
+            fFlag = true;
+        else if (e->key() == Qt::Key_S)
+            bFlag = true;
 
-    if (e->key() == Qt::Key_A)
-        lrFlag = true;
-    else if(e->key() == Qt::Key_E)
-        rrFlag = true;
+        if (e->key() == Qt::Key_D)
+            rFlag = true;
+        else if (e->key() == Qt::Key_Q)
+            lFlag = true;
 
-    if (e->key() == Qt::Key_Space)
-        uFlag = true;
-    else if (e->key() == Qt::Key_Control)
-        dFlag = true;
+        if (e->key() == Qt::Key_A)
+            lrFlag = true;
+        else if(e->key() == Qt::Key_E)
+            rrFlag = true;
+
+        if (e->key() == Qt::Key_Space)
+            uFlag = true;
+        else if (e->key() == Qt::Key_Control)
+            dFlag = true;
+    }
 }
 
 void MainWidget::keyReleaseEvent(QKeyEvent* e) {
 
-    if (e->key() == Qt::Key_Z)
-        fFlag = false;
-    else if (e->key() == Qt::Key_S)
-        bFlag = false;
+    if (freeFlag) {
+        if (e->key() == Qt::Key_Z)
+            fFlag = false;
+        else if (e->key() == Qt::Key_S)
+            bFlag = false;
 
-    if (e->key() == Qt::Key_D)
-        rFlag = false;
-    else if (e->key() == Qt::Key_Q)
-        lFlag = false;
+        if (e->key() == Qt::Key_D)
+            rFlag = false;
+        else if (e->key() == Qt::Key_Q)
+            lFlag = false;
 
-    if (e->key() == Qt::Key_A)
-        lrFlag = false;
-    else if(e->key() == Qt::Key_E)
-        rrFlag = false;
+        if (e->key() == Qt::Key_A)
+            lrFlag = false;
+        else if(e->key() == Qt::Key_E)
+            rrFlag = false;
 
-    if (e->key() == Qt::Key_Space)
-        uFlag = false;
-    else if (e->key() == Qt::Key_Control)
-        dFlag = false;
+        if (e->key() == Qt::Key_Space)
+            uFlag = false;
+        else if (e->key() == Qt::Key_Control)
+            dFlag = false;
+    }
 }
 
 std::ostream& operator<< (std::ostream& os, const QVector3D& v);
 
 void MainWidget::mouseMoveEvent(QMouseEvent *e)
 {
-    QVector2D diff = QVector2D(e->localPos()) - mousePressPosition;
-    qreal angleX = 0.2*qAtan(diff.x());
-    qreal angleY = 0.2*qAtan(diff.y());
+    if (freeFlag) {
 
-    //std::cout << angleX << std::endl;
+        QVector2D diff = QVector2D(e->localPos()) - mousePressPosition;
+        qreal angleX = 0.2*qAtan(diff.x());
+        qreal angleY = 0.2*qAtan(diff.y());
 
-    QMatrix4x4 M;
-    M.setToIdentity();
-    M.rotate(-angleX, lUp);
-    M.rotate(-angleY, lRight);
-    lRight = M*lRight;
-    lForward = M*lForward;
-    M.rotate(-angleY, lRight);
+        QMatrix4x4 M;
+        M.setToIdentity();
+        M.rotate(-angleX, lUp);
+        M.rotate(-angleY, lRight);
+        lRight = M*lRight;
+        lForward = M*lForward;
+        M.rotate(-angleY, lRight);
 
-    QVector3D center = eye + lForward;
-    lUp = QVector3D::crossProduct(lRight, lForward).normalized();
+        QVector3D center = eye + lForward;
+        lUp = QVector3D::crossProduct(lRight, lForward).normalized();
 
-    View.setToIdentity();
-    View.lookAt(eye, center, lUp);
+        View.setToIdentity();
+        View.lookAt(eye, center, lUp);
+    }
 }
 
 //! [0]
@@ -191,42 +201,46 @@ void MainWidget::mouseMoveEvent(QMouseEvent *e)
 //! [1]
 void MainWidget::timerEvent(QTimerEvent *)
 {
-    if (fFlag)
-        eye += speed * lForward;
-    else if (bFlag)
-        eye -= speed * lForward;
+    if (freeFlag) {
+        if (fFlag)
+            eye += speed * lForward;
+        else if (bFlag)
+            eye -= speed * lForward;
 
-    if (rFlag)
-        eye += speed * lRight;
-    else if (lFlag)
-        eye -= speed * lRight;
+        if (rFlag)
+            eye += speed * lRight;
+        else if (lFlag)
+            eye -= speed * lRight;
 
-     if (lrFlag) {
-        QMatrix4x4 M;
-        M.setToIdentity();
-        M.rotate(-1, lForward);
-        lUp = M*lUp;
-        lRight = M*lRight;
-     }
-     else if(rrFlag) {
-        QMatrix4x4 M;
-        M.setToIdentity();
-        M.rotate(1, lForward);
-        lUp = M*lUp;
-        lRight = M*lRight;
-     }
+         if (lrFlag) {
+            QMatrix4x4 M;
+            M.setToIdentity();
+            M.rotate(-1, lForward);
+            lUp = M*lUp;
+            lRight = M*lRight;
+         }
+         else if(rrFlag) {
+            QMatrix4x4 M;
+            M.setToIdentity();
+            M.rotate(1, lForward);
+            lUp = M*lUp;
+            lRight = M*lRight;
+         }
 
-     if (uFlag)
-        eye += speed * lUp;
-     else if (dFlag)
-        eye -= speed * lUp;
+         if (uFlag)
+            eye += speed * lUp;
+         else if (dFlag)
+            eye -= speed * lUp;
 
-    QVector3D center = eye + lForward;
-    lUp = QVector3D::crossProduct(lRight, lForward).normalized();
-    View.setToIdentity();
-    View.lookAt(eye, center, lUp);
+        QVector3D center = eye + lForward;
+        lUp = QVector3D::crossProduct(lRight, lForward).normalized();
+        View.setToIdentity();
+        View.lookAt(eye, center, lUp);
+    }
 
-    Model.rotate(0.1f, QVector3D(0.0f, 1.0f, 0.0f));
+    if (!freeFlag)
+        Model.rotate(0.1f, QVector3D(0.0f, 1.0f, 0.0f));
+
     update();
 }
 //! [1]

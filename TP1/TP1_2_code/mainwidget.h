@@ -125,6 +125,8 @@ private:
     bool rrFlag = false;
     bool lrFlag = false;
 
+    bool freeFlag = false;
+
     // Kinematic
     float speed = 0.02f;
 
