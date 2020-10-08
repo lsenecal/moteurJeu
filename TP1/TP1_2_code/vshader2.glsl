@@ -6,8 +6,6 @@ uniform mat4 projection_matrix;
 
 uniform sampler2D heightMap;
 
-uniform vec3 eyePos;
-
 in vec4 a_position;
 in vec2 a_texcoord;
 
@@ -25,7 +23,7 @@ void main()
     float phi = acos(position.z / r);
     float theta = atan(position.y, position.x);
 
-    r += 0.2f * texture2D(heightMap, a_texcoord).x;
+    r += 0.2f * (1 - texture2D(heightMap, a_texcoord).x);
 
     position.x = r * sin(phi) * cos(theta);
     position.y = r * sin(phi) * sin(theta);

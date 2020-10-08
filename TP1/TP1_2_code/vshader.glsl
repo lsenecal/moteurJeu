@@ -6,8 +6,6 @@ uniform mat4 projection_matrix;
 
 uniform sampler2D heightMap;
 
-uniform vec3 eyePos;
-
 in vec4 a_position;
 in vec2 a_texcoord;
 
