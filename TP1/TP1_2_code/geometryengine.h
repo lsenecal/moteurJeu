@@ -70,9 +70,12 @@ private:
     void initPlaneGeometry();
     void initSphereGeometry();
 
-    int size = 0;
+    std::vector<int> vertexSize;
     QOpenGLBuffer arrayBuf;
     QOpenGLBuffer indexBuf;
+
+    QOpenGLBuffer sphereArrayBuf;
+    QOpenGLBuffer sphereIndexBuf;
 };
 
 #endif // GEOMETRYENGINE_H

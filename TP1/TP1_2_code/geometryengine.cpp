@@ -65,7 +65,7 @@ struct VertexData
 
 //! [0]
 GeometryEngine::GeometryEngine()
-    : indexBuf(QOpenGLBuffer::IndexBuffer)
+    : indexBuf(QOpenGLBuffer::IndexBuffer), sphereIndexBuf(QOpenGLBuffer::IndexBuffer)
 {
     initializeOpenGLFunctions();
 
@@ -73,16 +73,22 @@ GeometryEngine::GeometryEngine()
     arrayBuf.create();
     indexBuf.create();
 
+    sphereArrayBuf.create();
+    sphereIndexBuf.create();
+
     // Initializes cube geometry and transfers it to VBOs
     //initCubeGeometry();
     initPlaneGeometry();
-    //initSphereGeometry();
+    initSphereGeometry();
 }
 
 GeometryEngine::~GeometryEngine()
 {
     arrayBuf.destroy();
     indexBuf.destroy();
+
+    sphereArrayBuf.destroy();
+    sphereIndexBuf.destroy();
 }
 //! [0]
 
@@ -188,7 +194,7 @@ void GeometryEngine::initPlaneGeometry()
         }
     }
 
-    size = planeIndices.size();
+    vertexSize.push_back(planeIndices.size());
 
     arrayBuf.bind();
     arrayBuf.allocate(planeVertices.data(), planeVertices.size() * sizeof(VertexData));
@@ -203,9 +209,9 @@ void GeometryEngine::initSphereGeometry()
     QVector<VertexData> vertices;
     QVector<GLushort> indices;
 
-    float radius = 1.0f;
-    unsigned int sectorCount = 64;
-    unsigned int stackCount = 36;
+    float radius = 2.0f;
+    unsigned int sectorCount = 128;
+    unsigned int stackCount = 72;
 
     float x, y, z, xy;                              // vertex position
     //float nx, ny, nz, lengthInv = 1.0f / radius;    // vertex normal
@@ -277,14 +283,14 @@ void GeometryEngine::initSphereGeometry()
         }
     }
 
-    size = indices.size();
+    vertexSize.push_back(indices.size());
 
-    arrayBuf.bind();
-    arrayBuf.allocate(vertices.data(), vertices.size() * sizeof(VertexData));
+    sphereArrayBuf.bind();
+    sphereArrayBuf.allocate(vertices.data(), vertices.size() * sizeof(VertexData));
 
     // Transfer index data to VBO 1
-    indexBuf.bind();
-    indexBuf.allocate(indices.data(), indices.size() * sizeof(GLushort));
+    sphereIndexBuf.bind();
+    sphereIndexBuf.allocate(indices.data(), indices.size() * sizeof(GLushort));
 }
 
 //! [2]
@@ -338,14 +344,14 @@ void GeometryEngine::drawPlaneGeometry(QOpenGLShaderProgram *program)
     program->setAttributeBuffer(texcoordLocation, GL_FLOAT, offset, 2, sizeof(VertexData));
 
     // Draw cube geometry using indices from VBO 1
-    glDrawElements(GL_TRIANGLE_STRIP, size, GL_UNSIGNED_SHORT, 0);
+    glDrawElements(GL_TRIANGLE_STRIP, vertexSize.at(0), GL_UNSIGNED_SHORT, 0);
 }
 
 void GeometryEngine::drawSphereGeometry(QOpenGLShaderProgram *program)
 {
     // Tell OpenGL which VBOs to use
-    arrayBuf.bind();
-    indexBuf.bind();
+    sphereArrayBuf.bind();
+    sphereIndexBuf.bind();
 
     // Offset for position
     quintptr offset = 0;
@@ -364,5 +370,5 @@ void GeometryEngine::drawSphereGeometry(QOpenGLShaderProgram *program)
     program->setAttributeBuffer(texcoordLocation, GL_FLOAT, offset, 2, sizeof(VertexData));
 
     // Draw cube geometry using indices from VBO 1
-     glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_SHORT, 0);
+     glDrawElements(GL_TRIANGLES, vertexSize.at(1), GL_UNSIGNED_SHORT, 0);
 }

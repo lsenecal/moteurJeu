@@ -88,9 +88,14 @@ protected:
     void initShaders();
     void initTextures();
 
+    void changeHeightMap();
+    inline void switchShaders();
+    inline void changeMesh();
+
 private:
     QBasicTimer timer;
     QOpenGLShaderProgram program;
+    QOpenGLShaderProgram program2;
     GeometryEngine *geometries;
 
     QOpenGLTexture* texture_grass;
@@ -129,6 +134,11 @@ private:
 
     // Kinematic
     float speed = 0.02f;
+
+    // Other
+    bool HMisOriginal = true;
+    unsigned int sID = 0;
+    unsigned int mID = 0;
 
 };
 

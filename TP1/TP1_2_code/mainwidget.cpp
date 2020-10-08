@@ -117,6 +117,13 @@ void MainWidget::mouseReleaseEvent(QMouseEvent *e)
 
 void MainWidget::keyPressEvent(QKeyEvent* e)
 {
+    if (e->key() == Qt::Key_P) {
+        switchShaders();
+        changeHeightMap();
+        changeMesh();
+        qDebug() << program2.log();
+    }
+
     if (e->key() == Qt::Key_C && freeFlag)
         freeFlag = false;
     else if (e->key() == Qt::Key_C && !freeFlag)
@@ -143,6 +150,10 @@ void MainWidget::keyPressEvent(QKeyEvent* e)
         else if (e->key() == Qt::Key_Control)
             dFlag = true;
     }
+}
+
+inline void MainWidget::changeMesh() {
+    mID = (mID + 1) % 2;
 }
 
 void MainWidget::keyReleaseEvent(QKeyEvent* e) {
@@ -283,11 +294,28 @@ void MainWidget::initShaders()
     if (!program.link())
         close();
 
+    // Compile vertex shader
+    if (!program2.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/vshader2.glsl"))
+        close();
+
+    // Compile fragment shader
+    if (!program2.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/fshader2.glsl"))
+        close();
+
+    // Link shader pipeline
+    if (!program2.link())
+        close();
+
     // Bind shader pipeline for use
     if (!program.bind())
         close();
 }
 //! [3]
+
+inline void MainWidget::switchShaders()
+{
+    sID = (sID + 1) % 2;
+}
 
 //! [4]
 void MainWidget::initTextures()
@@ -322,6 +350,22 @@ void MainWidget::initTextures()
 }
 //! [4]
 
+void MainWidget::changeHeightMap() {
+
+    if (HMisOriginal) {
+        heightMap = new QOpenGLTexture(QImage(":water_2k.png"));
+        HMisOriginal = false;
+    }
+    else {
+        heightMap = new QOpenGLTexture(QImage(":heightmap.png"));
+        HMisOriginal = true;
+    }
+
+    heightMap->setMinificationFilter(QOpenGLTexture::Nearest);
+    heightMap->setMagnificationFilter(QOpenGLTexture::Linear);
+    heightMap->setWrapMode(QOpenGLTexture::Repeat);
+}
+
 //! [5]
 void MainWidget::resizeGL(int w, int h)
 {
@@ -355,24 +399,52 @@ void MainWidget::paintGL()
     //matrix.translate(0.0, 0.0, -5.0);
     //matrix.rotate(rotation);
 
-    QVector3D eyeTest = View.column(3).toVector3D();
-    //std::cout << eyeTest.x() << " " <<  eyeTest.y() << " " << eyeTest.z() << std::endl;
+    if (sID == 0) {
 
-    // Set modelview-projection matrix
-    program.setUniformValue("eyePos", eyeTest);
-    program.setUniformValue("model_matrix", Model);
-    program.setUniformValue("view_matrix", View);
-    program.setUniformValue("projection_matrix", projection);
-//! [6]
+        // Bind shader pipeline for use
+        if (!program.bind())
+            close();
 
-    // Use texture unit 0 which contains cube.png
-    program.setUniformValue("texture_grass", 0);
-    program.setUniformValue("texture_rock", 1);
-    program.setUniformValue("texture_snow", 2);
-    program.setUniformValue("heightMap", 3);
+        // Set modelview-projection matrix
+        program.setUniformValue("model_matrix", Model);
+        program.setUniformValue("view_matrix", View);
+        program.setUniformValue("projection_matrix", projection);
+        //! [6]
 
-    // Draw cube geometry
-    //geometries->drawCubeGeometry(&program);
-    geometries->drawPlaneGeometry(&program);
-    //geometries->drawSphereGeometry(&program);
+        // Use texture unit 0 which contains cube.png
+        program.setUniformValue("texture_grass", 0);
+        program.setUniformValue("texture_rock", 1);
+        program.setUniformValue("texture_snow", 2);
+        program.setUniformValue("heightMap", 3);
+    }
+    else if (sID == 1) {
+
+        // Bind shader pipeline for use
+        if (!program2.bind())
+            close();
+
+        // Set modelview-projection matrix
+        program2.setUniformValue("model_matrix", Model);
+        program2.setUniformValue("view_matrix", View);
+        program2.setUniformValue("projection_matrix", projection);
+    //! [6]
+
+        // Use texture unit 0 which contains cube.png
+        program2.setUniformValue("texture_grass", 0);
+        program2.setUniformValue("texture_rock", 1);
+        program2.setUniformValue("texture_snow", 2);
+        program2.setUniformValue("heightMap", 3);
+    }
+
+    //std::cout << sID << " " << mID << " " << HMisOriginal << std::endl;
+
+
+    if (sID == 0) {
+        // Draw cube geometry
+        geometries->drawPlaneGeometry(&program);
+    }
+    else if (sID == 1) {
+        // Draw sphere geometry
+        geometries->drawSphereGeometry(&program2);
+    }
 }
