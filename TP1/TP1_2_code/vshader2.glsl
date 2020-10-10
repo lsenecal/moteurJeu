@@ -23,7 +23,7 @@ void main()
     float phi = acos(position.z / r);
     float theta = atan(position.y, position.x);
 
-    r += 0.2f * (1 - texture2D(heightMap, a_texcoord).x);
+    r += 0.1f * (1 - texture2D(heightMap, a_texcoord).x);
 
     position.x = r * sin(phi) * cos(theta);
     position.y = r * sin(phi) * sin(theta);
