@@ -183,14 +183,14 @@ void GeometryEngine::initPlaneGeometry()
 
     for (size_t j = 0; j < n-1; ++j) {
         if (j != 0){
-            planeIndices.push_back(static_cast<int>(j)*n + n);
+            planeIndices.push_back(static_cast<GLushort>(j*n + n));
         }
         for (size_t i = 0; i < n; ++i) {
-            planeIndices.push_back(static_cast<int>(j)*n + static_cast<int>(i) + n);
-            planeIndices.push_back(static_cast<int>(j)*n + static_cast<int>(i));
+            planeIndices.push_back(static_cast<GLushort>(j*n + i + n));
+            planeIndices.push_back(static_cast<GLushort>(j*n + i));
         }
         if(j != n-2){
-            planeIndices.push_back((static_cast<int>(j)+1)*n - 1);
+            planeIndices.push_back(static_cast<GLushort>((j+1)*n - 1));
         }
     }
 
@@ -210,8 +210,8 @@ void GeometryEngine::initSphereGeometry()
     QVector<GLushort> indices;
 
     float radius = 2.0f;
-    unsigned int sectorCount = 128;
-    unsigned int stackCount = 72;
+    unsigned int sectorCount = 256;
+    unsigned int stackCount = 256;
 
     float x, y, z, xy;                              // vertex position
     //float nx, ny, nz, lengthInv = 1.0f / radius;    // vertex normal
@@ -238,8 +238,8 @@ void GeometryEngine::initSphereGeometry()
             y = xy * sinf(sectorAngle);             // r * cos(u) * sin(v)
 
             // vertex tex coord (s, t) range between [0, 1]
-            s = (float)j / sectorCount;
-            t = (float)i / stackCount;
+            s = 1.0f * j / sectorCount;
+            t = 1.0f * i / stackCount;
 
             VertexData vd;
             vd.position = QVector3D(x, y, z);
