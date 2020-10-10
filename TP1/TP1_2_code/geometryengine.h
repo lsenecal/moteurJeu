@@ -71,8 +71,11 @@ private:
     void initSphereGeometry();
 
     std::vector<int> vertexSize;
-    QOpenGLBuffer arrayBuf;
-    QOpenGLBuffer indexBuf;
+    QOpenGLBuffer cubeArrayBuf;
+    QOpenGLBuffer cubeIndexBuf;
+
+    QOpenGLBuffer planeArrayBuf;
+    QOpenGLBuffer planeIndexBuf;
 
     QOpenGLBuffer sphereArrayBuf;
     QOpenGLBuffer sphereIndexBuf;

@@ -65,27 +65,33 @@ struct VertexData
 
 //! [0]
 GeometryEngine::GeometryEngine()
-    : indexBuf(QOpenGLBuffer::IndexBuffer), sphereIndexBuf(QOpenGLBuffer::IndexBuffer)
+    : cubeIndexBuf(QOpenGLBuffer::IndexBuffer), planeIndexBuf(QOpenGLBuffer::IndexBuffer), sphereIndexBuf(QOpenGLBuffer::IndexBuffer)
 {
     initializeOpenGLFunctions();
 
     // Generate 2 VBOs
-    arrayBuf.create();
-    indexBuf.create();
+    cubeArrayBuf.create();
+    cubeIndexBuf.create();
+
+    planeArrayBuf.create();
+    planeIndexBuf.create();
 
     sphereArrayBuf.create();
     sphereIndexBuf.create();
 
     // Initializes cube geometry and transfers it to VBOs
-    //initCubeGeometry();
+    initCubeGeometry();
     initPlaneGeometry();
     initSphereGeometry();
 }
 
 GeometryEngine::~GeometryEngine()
 {
-    arrayBuf.destroy();
-    indexBuf.destroy();
+    cubeArrayBuf.destroy();
+    cubeIndexBuf.destroy();
+
+    planeArrayBuf.destroy();
+    planeIndexBuf.destroy();
 
     sphereArrayBuf.destroy();
     sphereIndexBuf.destroy();
@@ -160,12 +166,12 @@ void GeometryEngine::initCubeGeometry()
 
 //! [1]
     // Transfer vertex data to VBO 0
-    arrayBuf.bind();
-    arrayBuf.allocate(vertices, 24 * sizeof(VertexData));
+    cubeArrayBuf.bind();
+    cubeArrayBuf.allocate(vertices, 24 * sizeof(VertexData));
 
     // Transfer index data to VBO 1
-    indexBuf.bind();
-    indexBuf.allocate(indices, 34 * sizeof(GLushort));
+    cubeIndexBuf.bind();
+    cubeIndexBuf.allocate(indices, 34 * sizeof(GLushort));
 //! [1]
 }
 
@@ -196,12 +202,12 @@ void GeometryEngine::initPlaneGeometry()
 
     vertexSize.push_back(planeIndices.size());
 
-    arrayBuf.bind();
-    arrayBuf.allocate(planeVertices.data(), planeVertices.size() * sizeof(VertexData));
+    planeArrayBuf.bind();
+    planeArrayBuf.allocate(planeVertices.data(), planeVertices.size() * sizeof(VertexData));
 
     // Transfer index data to VBO 1
-    indexBuf.bind();
-    indexBuf.allocate(planeIndices.data(), planeIndices.size() * sizeof(GLushort));
+    planeIndexBuf.bind();
+    planeIndexBuf.allocate(planeIndices.data(), planeIndices.size() * sizeof(GLushort));
 }
 
 void GeometryEngine::initSphereGeometry()
@@ -297,8 +303,8 @@ void GeometryEngine::initSphereGeometry()
 void GeometryEngine::drawCubeGeometry(QOpenGLShaderProgram *program)
 {
     // Tell OpenGL which VBOs to use
-    arrayBuf.bind();
-    indexBuf.bind();
+    cubeArrayBuf.bind();
+    cubeIndexBuf.bind();
 
     // Offset for position
     quintptr offset = 0;
@@ -324,8 +330,8 @@ void GeometryEngine::drawCubeGeometry(QOpenGLShaderProgram *program)
 void GeometryEngine::drawPlaneGeometry(QOpenGLShaderProgram *program)
 {
     // Tell OpenGL which VBOs to use
-    arrayBuf.bind();
-    indexBuf.bind();
+    planeArrayBuf.bind();
+    planeIndexBuf.bind();
 
     // Offset for position
     quintptr offset = 0;

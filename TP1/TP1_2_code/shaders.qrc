@@ -1,8 +1,10 @@
 <RCC>
     <qresource prefix="/">
-        <file>vshader.glsl</file>
-        <file>fshader.glsl</file>
-        <file>vshader2.glsl</file>
-        <file>fshader2.glsl</file>
+        <file>vshaderPlane.glsl</file>
+        <file>fshaderPlane.glsl</file>
+        <file>vshaderSphere.glsl</file>
+        <file>fshaderSphere.glsl</file>
+        <file>fshaderCube.glsl</file>
+        <file>vshaderCube.glsl</file>
     </qresource>
 </RCC>

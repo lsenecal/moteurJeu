@@ -100,19 +100,19 @@ protected:
     void initShaders();
     void initTextures();
 
-    void changeHeightMap();
-    inline void switchShaders();
-    inline void changeMesh();
+    void changeHeightMap(int sID);
 
 private:
     QBasicTimer timer;
-    QOpenGLShaderProgram program;
-    QOpenGLShaderProgram program2;
+    QOpenGLShaderProgram programCube;
+    QOpenGLShaderProgram programPlane;
+    QOpenGLShaderProgram programSphere;
     GeometryEngine *geometries;
 
     QOpenGLTexture* texture_grass;
     QOpenGLTexture* texture_rock;
     QOpenGLTexture* texture_snow;
+    QOpenGLTexture* texture_cube;
     QOpenGLTexture* heightMap;
 
     std::vector<Camera> cameras;
@@ -152,7 +152,6 @@ private:
     // Other
     bool HMisOriginal = true;
     unsigned int sID = 0;
-    unsigned int mID = 0;
 
 };
 

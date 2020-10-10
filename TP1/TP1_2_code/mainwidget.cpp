@@ -62,9 +62,11 @@ MainWidget::MainWidget(QWidget *parent) :
     texture_grass(nullptr),
     texture_rock(nullptr),
     texture_snow(nullptr),
+    texture_cube(nullptr),
     heightMap(nullptr),
     angularSpeed(0)
 {
+    for (size_t i = 0; i < 3; ++i)
     {
         eye = QVector3D(0.0, 10.0, 10.0);
         QVector3D center = QVector3D(0.0, 0.0, 0.0);
@@ -75,17 +77,7 @@ MainWidget::MainWidget(QWidget *parent) :
         cameras.push_back({eye, lForward, lRight, lUp});
     }
 
-    {
-        eye = QVector3D(0.0, 10.0, 10.0);
-        QVector3D center = QVector3D(0.0, 0.0, 0.0);
-        lForward = (center - eye).normalized();
-        lRight = QVector3D(1.0, 0.0, 0.0);
-        lUp = QVector3D::crossProduct(lRight, lForward).normalized();
-
-        cameras.push_back({eye, lForward, lRight, lUp});
-    }
-
-    this->resize(1280, 720);
+    this->resize(width, height);
 
     Camera & c = cameras.at(0);
     View.lookAt(c.eye, c.getCenter(), c.lUp);
@@ -99,6 +91,7 @@ MainWidget::~MainWidget()
     delete texture_grass;
     delete texture_rock;
     delete texture_snow;
+    delete texture_cube;
     delete heightMap;
     delete geometries;
     doneCurrent();
@@ -159,15 +152,18 @@ void MainWidget::keyPressEvent(QKeyEvent* e)
             dFlag = true;
     }
 
-    if (e->key() == Qt::Key_P) {
-        switchShaders();
-        changeHeightMap();
-        changeMesh();
-    }
-}
+    if (e->key() == Qt::Key_1)
+        sID = 0;
 
-inline void MainWidget::changeMesh() {
-    mID = (mID + 1) % 2;
+    if (e->key() == Qt::Key_2) {
+        changeHeightMap(1);
+        sID = 1;
+    }
+
+    if (e->key() == Qt::Key_3) {
+        changeHeightMap(2);
+        sID = 2;
+    }
 }
 
 void MainWidget::keyReleaseEvent(QKeyEvent* e) {
@@ -237,19 +233,13 @@ void MainWidget::timerEvent(QTimerEvent *)
     }
 
     if (freeFlag) {
-        if (sID == 0)
-            moveCamera(fFlag, bFlag, rFlag, lFlag, uFlag, dFlag, lrFlag, rrFlag, cameras.at(0), View, speed);
-        else if (sID == 1)
-            moveCamera(fFlag, bFlag, rFlag, lFlag, uFlag, dFlag, lrFlag, rrFlag, cameras.at(1), View, speed);
+        moveCamera(fFlag, bFlag, rFlag, lFlag, uFlag, dFlag, lrFlag, rrFlag, cameras.at(sID), View, speed);
     }
 
-    float r = sqrtf((mousePos.x() - 640.0f) * (mousePos.x() - 640.0f) + (mousePos.y() - 360.0f)*(mousePos.y()-360.0f));
+    float r = sqrtf((mousePos.x() - width/2.0f) * (mousePos.x() - width/2.0f) + (mousePos.y() - height/2.0f)*(mousePos.y() - height/2.0f));
 
     if (freeFlag && r > 20) {
-        if (sID == 0)
-            rotateCamera(mousePos, cameras.at(0), View);
-        else if (sID == 1)
-            rotateCamera(mousePos, cameras.at(1), View);
+        rotateCamera(mousePos, cameras.at(sID), View);
     }
 
     if (!freeFlag)
@@ -286,39 +276,46 @@ void MainWidget::initializeGL()
 void MainWidget::initShaders()
 {
     // Compile vertex shader
-    if (!program.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/vshader.glsl"))
+    if (!programCube.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/vshaderCube.glsl"))
         close();
 
     // Compile fragment shader
-    if (!program.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/fshader.glsl"))
+    if (!programCube.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/fshaderCube.glsl"))
         close();
 
     // Link shader pipeline
-    if (!program.link())
+    if (!programCube.link())
         close();
 
     // Compile vertex shader
-    if (!program2.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/vshader2.glsl"))
+    if (!programPlane.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/vshaderPlane.glsl"))
         close();
 
     // Compile fragment shader
-    if (!program2.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/fshader2.glsl"))
+    if (!programPlane.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/fshaderPlane.glsl"))
         close();
 
     // Link shader pipeline
-    if (!program2.link())
+    if (!programPlane.link())
+        close();
+
+    // Compile vertex shader
+    if (!programSphere.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/vshaderSphere.glsl"))
+        close();
+
+    // Compile fragment shader
+    if (!programSphere.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/fshaderSphere.glsl"))
+        close();
+
+    // Link shader pipeline
+    if (!programSphere.link())
         close();
 
     // Bind shader pipeline for use
-    if (!program.bind())
+    if (!programCube.bind())
         close();
 }
 //! [3]
-
-inline void MainWidget::switchShaders()
-{
-    sID = (sID + 1) % 2;
-}
 
 //! [4]
 void MainWidget::initTextures()
@@ -346,6 +343,11 @@ void MainWidget::initTextures()
     texture_snow->setMagnificationFilter(QOpenGLTexture::Linear);
     texture_snow->setWrapMode(QOpenGLTexture::Repeat);
 
+    texture_cube = new QOpenGLTexture(QImage(":cube.png").mirrored());
+    texture_cube->setMagnificationFilter(QOpenGLTexture::Nearest);
+    texture_cube->setMagnificationFilter(QOpenGLTexture::Linear);
+    texture_cube->setWrapMode(QOpenGLTexture::Repeat);
+
     heightMap = new QOpenGLTexture(QImage(":heightmap.png"));
     heightMap->setMinificationFilter(QOpenGLTexture::Nearest);
     heightMap->setMagnificationFilter(QOpenGLTexture::Linear);
@@ -353,20 +355,24 @@ void MainWidget::initTextures()
 }
 //! [4]
 
-void MainWidget::changeHeightMap() {
+void MainWidget::changeHeightMap(int sID) {
 
-    if (HMisOriginal) {
+    if (HMisOriginal && sID == 2) {
         heightMap = new QOpenGLTexture(QImage(":water_2k.png"));
         HMisOriginal = false;
+
+        heightMap->setMinificationFilter(QOpenGLTexture::Nearest);
+        heightMap->setMagnificationFilter(QOpenGLTexture::Linear);
+        heightMap->setWrapMode(QOpenGLTexture::Repeat);
     }
-    else {
+    else if (!HMisOriginal && sID ==1) {
         heightMap = new QOpenGLTexture(QImage(":heightmap.png"));
         HMisOriginal = true;
-    }
 
-    heightMap->setMinificationFilter(QOpenGLTexture::Nearest);
-    heightMap->setMagnificationFilter(QOpenGLTexture::Linear);
-    heightMap->setWrapMode(QOpenGLTexture::Repeat);
+        heightMap->setMinificationFilter(QOpenGLTexture::Nearest);
+        heightMap->setMagnificationFilter(QOpenGLTexture::Linear);
+        heightMap->setWrapMode(QOpenGLTexture::Repeat);
+    }
 }
 
 //! [5]
@@ -394,7 +400,8 @@ void MainWidget::paintGL()
     texture_grass->bind(0);
     texture_rock->bind(1);
     texture_snow->bind(2);
-    heightMap->bind(3);
+    texture_cube->bind(3);
+    heightMap->bind(4);
 
 //! [6]
     // Calculate model view transformation
@@ -403,52 +410,64 @@ void MainWidget::paintGL()
     //matrix.rotate(rotation);
 
     if (sID == 0) {
+        // Bind shader pipeline for use
+        if (!programCube.bind())
+            close();
+
+        programCube.setUniformValue("model_matrix", Model);
+        programCube.setUniformValue("view_matrix", View);
+        programCube.setUniformValue("projection_matrix", projection);
+
+        programCube.setUniformValue("texture_cube", 3);
+    }
+    else if (sID == 1) {
 
         // Bind shader pipeline for use
-        if (!program.bind())
+        if (!programPlane.bind())
             close();
 
         // Set modelview-projection matrix
-        program.setUniformValue("model_matrix", Model);
-        program.setUniformValue("view_matrix", View);
-        program.setUniformValue("projection_matrix", projection);
+        programPlane.setUniformValue("model_matrix", Model);
+        programPlane.setUniformValue("view_matrix", View);
+        programPlane.setUniformValue("projection_matrix", projection);
         //! [6]
 
         // Use texture unit 0 which contains cube.png
-        program.setUniformValue("texture_grass", 0);
-        program.setUniformValue("texture_rock", 1);
-        program.setUniformValue("texture_snow", 2);
-        program.setUniformValue("heightMap", 3);
+        programPlane.setUniformValue("texture_grass", 0);
+        programPlane.setUniformValue("texture_rock", 1);
+        programPlane.setUniformValue("texture_snow", 2);
+        programPlane.setUniformValue("heightMap", 4);
     }
-    else if (sID == 1) {
+    else if (sID == 2) {
 
         // Bind shader pipeline for use
-        if (!program2.bind())
+        if (!programSphere.bind())
             close();
 
         // Set modelview-projection matrix
-        program2.setUniformValue("model_matrix", Model);
-        program2.setUniformValue("view_matrix", View);
-        program2.setUniformValue("projection_matrix", projection);
+        programSphere.setUniformValue("model_matrix", Model);
+        programSphere.setUniformValue("view_matrix", View);
+        programSphere.setUniformValue("projection_matrix", projection);
     //! [6]
 
         // Use texture unit 0 which contains cube.png
-        program2.setUniformValue("texture_grass", 0);
-        program2.setUniformValue("texture_rock", 1);
-        program2.setUniformValue("texture_snow", 2);
-        program2.setUniformValue("heightMap", 3);
+        programSphere.setUniformValue("texture_grass", 0);
+        programSphere.setUniformValue("texture_rock", 1);
+        programSphere.setUniformValue("texture_snow", 2);
+        programSphere.setUniformValue("heightMap", 4);
     }
-
-    //std::cout << sID << " " << mID << " " << HMisOriginal << std::endl;
-
 
     if (sID == 0) {
         // Draw cube geometry
-        geometries->drawPlaneGeometry(&program);
+        geometries->drawCubeGeometry(&programCube);
     }
     else if (sID == 1) {
+        // Draw cube geometry
+        geometries->drawPlaneGeometry(&programPlane);
+    }
+    else if (sID == 2) {
         // Draw sphere geometry
-        geometries->drawSphereGeometry(&program2);
+        geometries->drawSphereGeometry(&programSphere);
     }
 }
 
