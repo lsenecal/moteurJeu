@@ -65,6 +65,18 @@
 
 class GeometryEngine;
 
+struct Camera {
+    QVector3D eye;
+    QVector3D lForward;
+    QVector3D lRight;
+    QVector3D lUp;
+
+    inline QVector3D getCenter()
+    {
+        return eye + lForward;
+    }
+};
+
 class MainWidget : public QOpenGLWidget, protected QOpenGLFunctions_3_1
 {
     Q_OBJECT
@@ -74,11 +86,11 @@ public:
     ~MainWidget();
 
 protected:
-    void mousePressEvent(QMouseEvent *e) override;
-    void mouseReleaseEvent(QMouseEvent *e) override;
+    //void mousePressEvent(QMouseEvent *e) override;
+    //void mouseReleaseEvent(QMouseEvent *e) override;
+    //void mouseMoveEvent(QMouseEvent *e) override;
     void keyPressEvent(QKeyEvent* e) override;
     void keyReleaseEvent(QKeyEvent* e) override;
-    void mouseMoveEvent(QMouseEvent *e) override;
     void timerEvent(QTimerEvent *e) override;
 
     void initializeGL() override;
@@ -102,6 +114,8 @@ private:
     QOpenGLTexture* texture_rock;
     QOpenGLTexture* texture_snow;
     QOpenGLTexture* heightMap;
+
+    std::vector<Camera> cameras;
 
     QVector3D eye;
     QVector3D lForward;
@@ -141,5 +155,8 @@ private:
     unsigned int mID = 0;
 
 };
+
+void moveCamera(bool fFlag, bool bFlag, bool rFlag, bool lFlag, bool uFlag, bool dFlag, bool lrFlag, bool rrFlag, Camera & cam, QMatrix4x4 & View, float speed);
+void rotateCamera(QVector2D mousePos, Camera & cam, QMatrix4x4 & View);
 
 #endif // MAINWIDGET_H

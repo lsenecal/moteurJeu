@@ -58,22 +58,37 @@
 
 MainWidget::MainWidget(QWidget *parent) :
     QOpenGLWidget(parent),
-    geometries(0),
-    texture_grass(0),
-    texture_rock(0),
-    texture_snow(0),
-    heightMap(0),
+    geometries(nullptr),
+    texture_grass(nullptr),
+    texture_rock(nullptr),
+    texture_snow(nullptr),
+    heightMap(nullptr),
     angularSpeed(0)
 {
-    eye = QVector3D(0.0, 10.0, 10.0);
-    QVector3D center = QVector3D(0.0, 0.0, 0.0);
-    lForward = (center - eye).normalized();
-    lRight = QVector3D(1.0, 0.0, 0.0);
-    lUp = QVector3D::crossProduct(lRight, lForward).normalized();
+    {
+        eye = QVector3D(0.0, 10.0, 10.0);
+        QVector3D center = QVector3D(0.0, 0.0, 0.0);
+        lForward = (center - eye).normalized();
+        lRight = QVector3D(1.0, 0.0, 0.0);
+        lUp = QVector3D::crossProduct(lRight, lForward).normalized();
+
+        cameras.push_back({eye, lForward, lRight, lUp});
+    }
+
+    {
+        eye = QVector3D(0.0, 10.0, 10.0);
+        QVector3D center = QVector3D(0.0, 0.0, 0.0);
+        lForward = (center - eye).normalized();
+        lRight = QVector3D(1.0, 0.0, 0.0);
+        lUp = QVector3D::crossProduct(lRight, lForward).normalized();
+
+        cameras.push_back({eye, lForward, lRight, lUp});
+    }
 
     this->resize(1280, 720);
 
-    View.lookAt(eye, center, lUp);
+    Camera & c = cameras.at(0);
+    View.lookAt(c.eye, c.getCenter(), c.lUp);
 }
 
 MainWidget::~MainWidget()
@@ -90,7 +105,7 @@ MainWidget::~MainWidget()
 }
 
 //! [0]
-void MainWidget::mousePressEvent(QMouseEvent *e)
+/*void MainWidget::mousePressEvent(QMouseEvent *e)
 {
     // Save mouse press position
     mousePressPosition = QVector2D(e->localPos());
@@ -113,17 +128,10 @@ void MainWidget::mouseReleaseEvent(QMouseEvent *e)
 
     // Increase angular speed
     angularSpeed += acc;
-}
+}*/
 
 void MainWidget::keyPressEvent(QKeyEvent* e)
 {
-    if (e->key() == Qt::Key_P) {
-        switchShaders();
-        changeHeightMap();
-        changeMesh();
-        qDebug() << program2.log();
-    }
-
     if (e->key() == Qt::Key_C && freeFlag)
         freeFlag = false;
     else if (e->key() == Qt::Key_C && !freeFlag)
@@ -149,6 +157,12 @@ void MainWidget::keyPressEvent(QKeyEvent* e)
             uFlag = true;
         else if (e->key() == Qt::Key_Control)
             dFlag = true;
+    }
+
+    if (e->key() == Qt::Key_P) {
+        switchShaders();
+        changeHeightMap();
+        changeMesh();
     }
 }
 
@@ -183,13 +197,17 @@ void MainWidget::keyReleaseEvent(QKeyEvent* e) {
 
 std::ostream& operator<< (std::ostream& os, const QVector3D& v);
 
-void MainWidget::mouseMoveEvent(QMouseEvent *e)
+/*void MainWidget::mouseMoveEvent(QMouseEvent *e)
 {
     if (freeFlag) {
 
-        QVector2D diff = QVector2D(e->localPos()) - mousePressPosition;
-        qreal angleX = 0.2*qAtan(diff.x());
-        qreal angleY = 0.2*qAtan(diff.y());
+        QVector2D centralPos = QVector2D(640, 360);
+
+        QVector2D currentMousePosition = QVector2D(e->localPos());
+
+        QVector2D diff = currentMousePosition - centralPos;
+        float angleX = 0.2f*atanf(diff.x());
+        float angleY = 0.2f*atanf(diff.y());
 
         QMatrix4x4 M;
         M.setToIdentity();
@@ -205,48 +223,33 @@ void MainWidget::mouseMoveEvent(QMouseEvent *e)
         View.setToIdentity();
         View.lookAt(eye, center, lUp);
     }
-}
+}*/
 
 //! [0]
 
 //! [1]
 void MainWidget::timerEvent(QTimerEvent *)
 {
+    QVector2D mousePos;
+    {
+        QPoint p = this->mapFromGlobal(QCursor::pos());
+        mousePos = QVector2D(static_cast<float>(p.x()), static_cast<float>(p.y()));
+    }
+
     if (freeFlag) {
-        if (fFlag)
-            eye += speed * lForward;
-        else if (bFlag)
-            eye -= speed * lForward;
+        if (sID == 0)
+            moveCamera(fFlag, bFlag, rFlag, lFlag, uFlag, dFlag, lrFlag, rrFlag, cameras.at(0), View, speed);
+        else if (sID == 1)
+            moveCamera(fFlag, bFlag, rFlag, lFlag, uFlag, dFlag, lrFlag, rrFlag, cameras.at(1), View, speed);
+    }
 
-        if (rFlag)
-            eye += speed * lRight;
-        else if (lFlag)
-            eye -= speed * lRight;
+    float r = sqrtf((mousePos.x() - 640.0f) * (mousePos.x() - 640.0f) + (mousePos.y() - 360.0f)*(mousePos.y()-360.0f));
 
-         if (lrFlag) {
-            QMatrix4x4 M;
-            M.setToIdentity();
-            M.rotate(-1, lForward);
-            lUp = M*lUp;
-            lRight = M*lRight;
-         }
-         else if(rrFlag) {
-            QMatrix4x4 M;
-            M.setToIdentity();
-            M.rotate(1, lForward);
-            lUp = M*lUp;
-            lRight = M*lRight;
-         }
-
-         if (uFlag)
-            eye += speed * lUp;
-         else if (dFlag)
-            eye -= speed * lUp;
-
-        QVector3D center = eye + lForward;
-        lUp = QVector3D::crossProduct(lRight, lForward).normalized();
-        View.setToIdentity();
-        View.lookAt(eye, center, lUp);
+    if (freeFlag && r > 20) {
+        if (sID == 0)
+            rotateCamera(mousePos, cameras.at(0), View);
+        else if (sID == 1)
+            rotateCamera(mousePos, cameras.at(1), View);
     }
 
     if (!freeFlag)
@@ -379,7 +382,7 @@ void MainWidget::resizeGL(int w, int h)
     projection.setToIdentity();
 
     // Set perspective projection
-    projection.perspective(fov, aspect, zNear, zFar);
+    projection.perspective(fov, static_cast<float>(aspect), zNear, zFar);
 }
 //! [5]
 
@@ -447,4 +450,83 @@ void MainWidget::paintGL()
         // Draw sphere geometry
         geometries->drawSphereGeometry(&program2);
     }
+}
+
+void moveCamera(bool fFlag, bool bFlag, bool rFlag, bool lFlag, bool uFlag, bool dFlag, bool lrFlag, bool rrFlag, Camera & cam, QMatrix4x4 & View, float speed)
+{
+    QVector3D & eye = cam.eye;
+    QVector3D & lForward = cam.lForward;
+    QVector3D & lRight = cam.lRight;
+    QVector3D & lUp = cam.lUp;
+
+    if (fFlag)
+        eye += speed * lForward;
+    else if (bFlag)
+        eye -= speed * lForward;
+
+    if (rFlag)
+        eye += speed * lRight;
+    else if (lFlag)
+        eye -= speed * lRight;
+
+     if (lrFlag) {
+        QMatrix4x4 M;
+        M.setToIdentity();
+        M.rotate(-1, lForward);
+        lUp = M*lUp;
+        lRight = M*lRight;
+     }
+     else if(rrFlag) {
+        QMatrix4x4 M;
+        M.setToIdentity();
+        M.rotate(1, lForward);
+        lUp = M*lUp;
+        lRight = M*lRight;
+     }
+
+     if (uFlag)
+        eye += speed * lUp;
+     else if (dFlag)
+        eye -= speed * lUp;
+
+    QVector3D center = cam.getCenter();
+    lUp = QVector3D::crossProduct(lRight, lForward).normalized();
+    View.setToIdentity();
+    View.lookAt(eye, center, lUp);
+}
+
+void rotateCamera(QVector2D mousePos, Camera & cam, QMatrix4x4 & View) {
+
+    QVector3D & eye = cam.eye;
+    QVector3D & lForward = cam.lForward;
+    QVector3D & lRight = cam.lRight;
+    QVector3D & lUp = cam.lUp;
+
+    QVector2D centralPos = QVector2D(640, 360);
+
+    QVector2D & currentMousePosition = mousePos;
+
+    QVector2D diff = currentMousePosition - centralPos;
+    float angleX = atanf(diff.x()/640.0f);
+    float angleY = atanf(diff.y() / 360.0f);
+
+    if (angleX < 0.1f && angleX > -0.1f)
+        angleX = 0.0f;
+
+    if (angleY < 0.1f && angleY > -0.1f)
+        angleY = 0.0f;
+
+    QMatrix4x4 M;
+    M.setToIdentity();
+    M.rotate(-angleX, lUp);
+    M.rotate(-angleY, lRight);
+    lRight = M*lRight;
+    lForward = M*lForward;
+    M.rotate(-angleY, lRight);
+
+    QVector3D center = cam.getCenter();
+    lUp = QVector3D::crossProduct(lRight, lForward).normalized();
+
+    View.setToIdentity();
+    View.lookAt(eye, center, lUp);
 }
