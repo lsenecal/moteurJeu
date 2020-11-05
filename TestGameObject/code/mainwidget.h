@@ -15,8 +15,8 @@
 class MainWidget : public QOpenGLWidget, protected QOpenGLFunctions_3_1
 {
 public:
-    explicit MainWidget(QWidget* parent = 0);
-    ~MainWidget();
+    explicit MainWidget(QWidget* parent = nullptr);
+    ~MainWidget() override;
 protected:
     void initializeGL() override;
     void resizeGL(int w, int h) override;

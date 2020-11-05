@@ -4,12 +4,16 @@
 #include "mesh.h"
 #include <QOpenGLFunctions_3_1>
 #include <QOpenGLShaderProgram>
+#include <QOpenGLWidget>
 
 class GameObject : protected QOpenGLFunctions_3_1
 {
 public:
     GameObject();
-    GameObject(Mesh* m, QOpenGLShaderProgram* s);
+    GameObject(Mesh* mesh, QOpenGLShaderProgram* shader);
+    void init();
+    void setMesh(Mesh* mesh);
+    void setShaders(QOpenGLShaderProgram* shader);
     Mesh* getMesh();
     QOpenGLShaderProgram* getShader();
     void draw();

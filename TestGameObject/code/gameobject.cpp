@@ -5,10 +5,16 @@ GameObject::GameObject()
 
 }
 
-GameObject::GameObject(Mesh* m, QOpenGLShaderProgram* s) : GameObject()
+GameObject::GameObject(Mesh* mesh, QOpenGLShaderProgram* shader) : GameObject()
 {
-    this->mesh = m;
-    this->shaders = s;
+    initializeOpenGLFunctions();
+    this->mesh = mesh;
+    this->shaders = shader;
+}
+
+void GameObject::init()
+{
+    initializeOpenGLFunctions();
 }
 
 Mesh * GameObject::getMesh()
@@ -19,6 +25,16 @@ Mesh * GameObject::getMesh()
 QOpenGLShaderProgram* GameObject::getShader()
 {
     return this->shaders;
+}
+
+void GameObject::setMesh(Mesh* mesh)
+{
+    this->mesh = mesh;
+}
+
+void GameObject::setShaders(QOpenGLShaderProgram* shader)
+{
+    this->shaders = shader;
 }
 
 void GameObject::draw()
