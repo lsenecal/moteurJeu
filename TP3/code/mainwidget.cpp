@@ -63,6 +63,8 @@ struct VertexData
     QVector2D texCoord;
 };
 
+bool version2 = false;
+
 MainWidget::MainWidget(QWidget *parent) :
     QOpenGLWidget(parent),
     texture_sun(nullptr),
@@ -97,8 +99,14 @@ MainWidget::~MainWidget()
 //! [1]
 void MainWidget::timerEvent(QTimerEvent *)
 {
+    if(version2) {
+        sun_earth->getTransform().getRotation().angle += 0.1f;
+        earth_moon->getTransform().getRotation().angle += 0.5f;
+    }
+
     sun->getTransform().getRotation().angle += 0.1f;
-    earth->getTransform().getRotation().angle += 0.5f;
+    earth->getTransform().getRotation().angle += 1.0f;
+    moon->getTransform().getRotation().angle += 1.0f;
     update();
 }
 //! [1]
@@ -127,54 +135,66 @@ void MainWidget::initializeGL()
 
     GS = GraphScene();
 
-    /*sun_earth = new GameObject(nullptr, nullptr, nullptr);
-    earth_moon = new GameObject(nullptr, nullptr, nullptr);
+    /*
+     Version avec des périodes de rotation et de révolution différentes
+     */
 
-    sun_earth->setRotationTransform({QVector3D(0.0f, 1.0f, 0.0f), 0.0f});
-    earth_moon->setRotationTransform({QVector3D(0.0f, 1.0f, 0.0f), 0.0f});
-    earth_moon->setTranslationTransform(QVector3D(10.0f, 0.0f, 0.0f));
+    if (version2) {
+        sun_earth = new GameObject(nullptr, nullptr, nullptr);
+        earth_moon = new GameObject(nullptr, nullptr, nullptr);
 
-    sun = new GameObject(sphereMesh, &program, texture_sun);
-    earth = new GameObject(sphereMesh, &program, texture_earth);
-    moon = new GameObject(sphereMesh, &program, texture_moon);
+        sun_earth->setRotationTransform({QVector3D(0.0f, 1.0f, 0.0f), 0.0f});
+        earth_moon->setRotationTransform({QVector3D(0.0f, 1.0f, 0.0f), 0.0f});
+        earth_moon->setTranslationTransform(QVector3D(10.0f, 0.0f, 0.0f));
 
-    sun_earth->addChild(sun);
-    sun_earth->addChild(earth_moon);
+        sun = new GameObject(sphereMesh, &program, texture_sun);
+        earth = new GameObject(sphereMesh, &program, texture_earth);
+        moon = new GameObject(sphereMesh, &program, texture_moon);
 
-    earth_moon->addChild(earth);
-    earth_moon->addChild(moon);
+        sun_earth->addChild(sun);
+        sun_earth->addChild(earth_moon);
 
-    sun->setScaleTransform(2.0f);
-    sun->setRotationTransform({QVector3D(0.0f, -1.0f, 0.0f), 0.0f});
+        earth_moon->addChild(earth);
+        earth_moon->addChild(moon);
 
-    earth->setScaleTransform(0.5f);
+        sun->setScaleTransform(2.0f);
+        sun->setRotationTransform({QVector3D(0.0f, -1.0f, 0.0f), 0.0f});
 
-    earth->setRotationTransform({QVector3D(0.0f, 1.0f, 0.0f), 0.0f});
-    earth->setRotationTransform({QVector3D(tan(23/180*M_PI), 1.0f, 0.0f), 0.0f});
+        earth->setScaleTransform(0.5f);
 
-    moon->setScaleTransform(0.2f);
-    moon->setTranslationTransform(QVector3D(10.0f, 0.0f, 0.0f));
+        earth->setRotationTransform({QVector3D(0.0f, 1.0f, 0.0f), 0.0f});
+        earth->setRotationTransform({QVector3D(tan(23/180*M_PI), 1.0f, 0.0f), 0.0f});
 
-    GS.addGameObject(sun_earth);*/
+        moon->setScaleTransform(0.2f);
+        moon->setTranslationTransform(QVector3D(10.0f, 0.0f, 0.0f));
 
-    sun = new GameObject(sphereMesh, &program, texture_sun);
-    earth = new GameObject(sphereMesh, &program, texture_earth);
-    moon = new GameObject(sphereMesh, &program, texture_moon);
+        GS.addGameObject(sun_earth);
+    }
 
-    sun->setScaleTransform(2.0f);
-    sun->setRotationTransform({QVector3D(0.0f, 1.0f, 0.0f), 0.0f});
+    /*
+     Version avec des périodes de rotation et de révolution identique
+     */
 
-    earth->setScaleTransform(0.5f);
-    earth->setTranslationTransform(QVector3D(10.0f, 0.0f, 0.0f));
-    earth->setRotationTransform({QVector3D(0.0f, 1.0f, 0.0f), 0.0f});
-    earth->setRotationTransform({QVector3D(tan(23/180*M_PI), 1.0f, 0.0f), 0.0f});
-    sun->addChild(earth);
+        if (!version2) {
+            sun = new GameObject(sphereMesh, &program, texture_sun);
+        earth = new GameObject(sphereMesh, &program, texture_earth);
+        moon = new GameObject(sphereMesh, &program, texture_moon);
 
-    moon->setScaleTransform(0.2f);
-    moon->setTranslationTransform(QVector3D(10.0f, 0.0f, 0.0f));
-    earth->addChild(moon);
+        sun->setScaleTransform(2.0f);
+        sun->setRotationTransform({QVector3D(0.0f, 1.0f, 0.0f), 0.0f});
 
-    GS.addGameObject(sun);
+        earth->setScaleTransform(0.5f);
+        earth->setTranslationTransform(QVector3D(10.0f, 0.0f, 0.0f));
+        earth->setRotationTransform({QVector3D(0.0f, 1.0f, 0.0f), 0.0f});
+        earth->setRotationTransform({QVector3D(tan(23/180*M_PI), 1.0f, 0.0f), 0.0f});
+        sun->addChild(earth);
+
+        moon->setScaleTransform(0.2f);
+        moon->setTranslationTransform(QVector3D(10.0f, 0.0f, 0.0f));
+        earth->addChild(moon);
+
+        GS.addGameObject(sun);
+        }
 
     // Use QBasicTimer because its faster than QTimer
     timer.start(12, this);
