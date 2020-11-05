@@ -16,6 +16,7 @@ SOURCES += \
     geometryengine.cpp
 
 HEADERS += \
+	BasicIO.h \
     camera.h \
     gameobject.h \
     geometryfactory.h \
@@ -26,6 +27,7 @@ HEADERS += \
     transform.h
 
 RESOURCES += \
+    file.qrc \
     shaders.qrc \
     textures.qrc
 

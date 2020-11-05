@@ -56,6 +56,7 @@
 #include <QtMath>
 #include <iostream>
 #include <fstream>
+#include <BasicIO.h>
 
 struct VertexData
 {
@@ -82,40 +83,40 @@ void GeometryFactory::addCubeGeometry(Mesh *mesh)
 
     VertexData vertices[] = {
         // Vertex data for face 0
-        {QVector3D(-1.0f, -1.0f,  1.0f), QVector2D(0.0f, 0.0f)},  // v0
-        {QVector3D( 1.0f, -1.0f,  1.0f), QVector2D(0.33f, 0.0f)}, // v1
-        {QVector3D(-1.0f,  1.0f,  1.0f), QVector2D(0.0f, 0.5f)},  // v2
-        {QVector3D( 1.0f,  1.0f,  1.0f), QVector2D(0.33f, 0.5f)}, // v3
+        {QVector3D(-1.0f, -1.0f,  1.0f), QVector2D(0.0f, 1.0f)},  // v0
+        {QVector3D( 1.0f, -1.0f,  1.0f), QVector2D(1.0f, 1.0f)}, // v1
+        {QVector3D(-1.0f,  1.0f,  1.0f), QVector2D(0.0f, 0.0f)},  // v2
+        {QVector3D( 1.0f,  1.0f,  1.0f), QVector2D(1.0f, 0.0f)}, // v3
 
         // Vertex data for face 1
-        {QVector3D( 1.0f, -1.0f,  1.0f), QVector2D( 0.0f, 0.5f)}, // v4
-        {QVector3D( 1.0f, -1.0f, -1.0f), QVector2D(0.33f, 0.5f)}, // v5
-        {QVector3D( 1.0f,  1.0f,  1.0f), QVector2D(0.0f, 1.0f)},  // v6
-        {QVector3D( 1.0f,  1.0f, -1.0f), QVector2D(0.33f, 1.0f)}, // v7
+        {QVector3D( 1.0f, -1.0f,  1.0f), QVector2D(0.0f, 1.0f)}, // v4
+        {QVector3D( 1.0f, -1.0f, -1.0f), QVector2D(1.0f, 1.0f)}, // v5
+        {QVector3D( 1.0f,  1.0f,  1.0f), QVector2D(0.0f, 0.0f)},  // v6
+        {QVector3D( 1.0f,  1.0f, -1.0f), QVector2D(1.0f, 0.0f)}, // v7
 
         // Vertex data for face 2
-        {QVector3D( 1.0f, -1.0f, -1.0f), QVector2D(0.66f, 0.5f)}, // v8
-        {QVector3D(-1.0f, -1.0f, -1.0f), QVector2D(1.0f, 0.5f)},  // v9
-        {QVector3D( 1.0f,  1.0f, -1.0f), QVector2D(0.66f, 1.0f)}, // v10
-        {QVector3D(-1.0f,  1.0f, -1.0f), QVector2D(1.0f, 1.0f)},  // v11
+        {QVector3D( 1.0f, -1.0f, -1.0f), QVector2D(0.0f, 1.0f)}, // v8
+        {QVector3D(-1.0f, -1.0f, -1.0f), QVector2D(1.0f, 1.0f)},  // v9
+        {QVector3D( 1.0f,  1.0f, -1.0f), QVector2D(0.0f, 0.0f)}, // v10
+        {QVector3D(-1.0f,  1.0f, -1.0f), QVector2D(1.0f, 0.0f)},  // v11
 
         // Vertex data for face 3
-        {QVector3D(-1.0f, -1.0f, -1.0f), QVector2D(0.66f, 0.0f)}, // v12
-        {QVector3D(-1.0f, -1.0f,  1.0f), QVector2D(1.0f, 0.0f)},  // v13
-        {QVector3D(-1.0f,  1.0f, -1.0f), QVector2D(0.66f, 0.5f)}, // v14
-        {QVector3D(-1.0f,  1.0f,  1.0f), QVector2D(1.0f, 0.5f)},  // v15
+        {QVector3D(-1.0f, -1.0f, -1.0f), QVector2D(0.0f, 1.0f)}, // v12
+        {QVector3D(-1.0f, -1.0f,  1.0f), QVector2D(1.0f, 1.0f)},  // v13
+        {QVector3D(-1.0f,  1.0f, -1.0f), QVector2D(0.0f, 0.0f)}, // v14
+        {QVector3D(-1.0f,  1.0f,  1.0f), QVector2D(1.0f, 0.0f)},  // v15
 
         // Vertex data for face 4
-        {QVector3D(-1.0f, -1.0f, -1.0f), QVector2D(0.33f, 0.0f)}, // v16
-        {QVector3D( 1.0f, -1.0f, -1.0f), QVector2D(0.66f, 0.0f)}, // v17
-        {QVector3D(-1.0f, -1.0f,  1.0f), QVector2D(0.33f, 0.5f)}, // v18
-        {QVector3D( 1.0f, -1.0f,  1.0f), QVector2D(0.66f, 0.5f)}, // v19
+        {QVector3D(-1.0f, -1.0f, -1.0f), QVector2D(0.0f, 1.0f)}, // v16
+        {QVector3D( 1.0f, -1.0f, -1.0f), QVector2D(1.0f, 1.0f)}, // v17
+        {QVector3D(-1.0f, -1.0f,  1.0f), QVector2D(0.0f, 0.0f)}, // v18
+        {QVector3D( 1.0f, -1.0f,  1.0f), QVector2D(1.0f, 0.0f)}, // v19
 
         // Vertex data for face 5
-        {QVector3D(-1.0f,  1.0f,  1.0f), QVector2D(0.33f, 0.5f)}, // v20
-        {QVector3D( 1.0f,  1.0f,  1.0f), QVector2D(0.66f, 0.5f)}, // v21
-        {QVector3D(-1.0f,  1.0f, -1.0f), QVector2D(0.33f, 1.0f)}, // v22
-        {QVector3D( 1.0f,  1.0f, -1.0f), QVector2D(0.66f, 1.0f)}  // v23
+        {QVector3D(-1.0f,  1.0f,  1.0f), QVector2D(0.0f, 1.0f)}, // v20
+        {QVector3D( 1.0f,  1.0f,  1.0f), QVector2D(1.0f, 1.0f)}, // v21
+        {QVector3D(-1.0f,  1.0f, -1.0f), QVector2D(0.0f, 0.0f)}, // v22
+        {QVector3D( 1.0f,  1.0f, -1.0f), QVector2D(1.0f, 0.0f)}  // v23
     };
 
     // Indices for drawing cube faces using triangle strips.
@@ -184,87 +185,100 @@ void GeometryFactory::addPlaneGeometry(Mesh *mesh)
 
 void GeometryFactory::addSphereGeometry(Mesh * mesh)
 {
-    QVector<VertexData> vertices;
-    QVector<GLushort> indices;
+    std::vector<QVector3D> vertices;
+    std::vector<GLushort> indices;
 
-    float radius = 2.0f;
-    unsigned int sectorCount = 16;
-    unsigned int stackCount = 8;
+    QFile qFile(":sphere.off");
+    if (!qFile.open(QIODevice::ReadOnly | QIODevice::Text))
+           assert(false);
 
-    float x, y, z, xy;                              // vertex position
-    //float nx, ny, nz, lengthInv = 1.0f / radius;    // vertex normal
-    float s, t;
+    QString line = qFile.readLine();
+    line = line.chopped(1);
 
-    float sectorStep = 2 * M_PI / sectorCount;
-    float stackStep = M_PI / stackCount;
-    float sectorAngle, stackAngle;
+    assert(line == "OFF");
 
-    for(size_t i = 0; i <= stackCount; ++i)
+    line = qFile.readLine();
+    line = line.chopped(1);
+    QStringList fields = line.split(" ");
+
+    int vsize = fields[0].toInt();
+    int isize = fields[1].toInt();
+
+    for (int i = 0; i < vsize; ++i)
     {
-        stackAngle = M_PI / 2 - i * stackStep;        // starting from pi/2 to -pi/2
-        xy = radius * cosf(stackAngle);             // r * cos(u)
-        z = radius * sinf(stackAngle);              // r * sin(u)
+        line = qFile.readLine();
+        line = line.chopped(1);
+        fields = line.split(" ");
+        float x, y, z;
+        x = fields[0].toFloat();
+        y = fields[1].toFloat();
+        z = fields[2].toFloat();
+        QVector3D v = QVector3D(x, y, z);
+        vertices.push_back(v);
+    }
 
-        // add (sectorCount+1) vertices per stack
-        // the first and last vertices have same position and normal, but different tex coords
-        for(size_t j = 0; j <= sectorCount; ++j)
-        {
-            sectorAngle = j * sectorStep;           // starting from 0 to 2pi
+    for (int i = 0; i < isize; ++i)
+    {
+        line = qFile.readLine();
+        line = line.chopped(1);
+        fields = line.split(" ");
+        indices.push_back(fields[0].toInt());
+        indices.push_back(fields[1].toInt());
+        indices.push_back(fields[2].toInt());
+    }
 
-            // vertex position (x, y, z)
-            x = xy * cosf(sectorAngle);             // r * cos(u) * cos(v)
-            y = xy * sinf(sectorAngle);             // r * cos(u) * sin(v)
+    qFile.close();
 
-            // vertex tex coord (s, t) range between [0, 1]
-            s = (float)j / sectorCount;
-            t = (float)i / stackCount;
 
-            VertexData vd;
-            vd.position = QVector3D(x, y, z);
-            vd.texCoord = QVector2D(s,t);
-            vertices.push_back(vd);
+    /*QFile qFile(":sphere.obj");
+        if (!qFile.open(QIODevice::ReadOnly | QIODevice::Text))
+               assert(false);
 
-            // normalized vertex normal (nx, ny, nz)
-            /*nx = x * lengthInv;
-            ny = y * lengthInv;
-            nz = z * lengthInv;
-            normals.push_back(nx);
-            normals.push_back(ny);
-            normals.push_back(nz);*/
+    QString line = qFile.readLine();
+    line = qFile.readLine();
+    line = qFile.readLine();
+    line = qFile.readLine();
+
+    int i = 0;
+
+    while(!qFile.atEnd()) {
+        line = qFile.readLine();
+        line = line.chopped(1);
+        QStringList fields = line.split(" ");
+
+        if (fields[0] == 'v') {
+            VertexData v;
+            v.position = QVector3D(fields[1].toFloat(), fields[2].toFloat(), fields[3].toFloat());
+            vertices.push_back(v);
+        }
+        else if (fields[0] == 'vt') {
+            QVector2D tex = QVector2D(fields[1].toFloat(), fields[2].toFloat());
+            vertices[i].texCoord = tex;
+            i++;
+        }
+        else if (fields[0] == 'vn') {
+
+        }
+        else if (fields[0] == 'f') {
+            for (int j = 1; j < fields.size(); ++j) {
+                QString tri = fields[j];
+                qDebug() << tri;
+                QStringList indices = tri.split('/');
+                indices.push_back(indices[0]);
+                indices.push_back(indices[1]);
+                indices.push_back(indices[2]);
+            }
         }
     }
 
-    int k1, k2;
-    for(size_t i = 0; i < stackCount; ++i)
-    {
-        k1 = static_cast<int>(i) * (sectorCount + 1);     // beginning of current stack
-        k2 = k1 + sectorCount + 1;      // beginning of next stack
+    qFile.close();
 
-        for(size_t j = 0; j < sectorCount; ++j, ++k1, ++k2)
-        {
-            // 2 triangles per sector excluding first and last stacks
-            // k1 => k2 => k1+1
-            if(i != 0)
-            {
-                indices.push_back(k1);
-                indices.push_back(k2);
-                indices.push_back(k1 + 1);
-            }
-
-            // k1+1 => k2 => k2+1
-            if(i != (stackCount-1))
-            {
-                indices.push_back(k1 + 1);
-                indices.push_back(k2);
-                indices.push_back(k2 + 1);
-            }
-        }
-    }
+    */
 
     mesh->setSize(indices.size());
 
     mesh->getArrayBuf().bind();
-    mesh->getArrayBuf().allocate(vertices.data(), vertices.size() * sizeof(VertexData));
+    mesh->getArrayBuf().allocate(vertices.data(), vertices.size() * sizeof(QVector3D));
 
     // Transfer index data to VBO 1
     mesh->getIndexBuf().bind();

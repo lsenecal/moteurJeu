@@ -64,10 +64,18 @@ struct VertexData
 };
 
 MainWidget::MainWidget(QWidget *parent) :
-    QOpenGLWidget(parent)/*,
-    graphscene(nullptr)*/
+    QOpenGLWidget(parent),
+    texture_sun(nullptr),
+    texture_earth(nullptr),
+    texture_moon(nullptr)
+
 {
-    View.lookAt(QVector3D(0, 0, 5), QVector3D(0, 0, 0), QVector3D(0, 1, 0));
+    QVector3D camPos = QVector3D(0, 10, 10);
+    QVector3D dir = (QVector3D(0.0f, 0.0f, 0.0f) - camPos).normalized();
+    QVector3D right = QVector3D(1.0, 0.0, 0.0);
+    QVector3D up = QVector3D::crossProduct(right, dir);
+
+    View.lookAt(camPos, QVector3D(0, 0, 0), up);
     Model.setToIdentity();
 
     this->resize(1280, 720);
@@ -78,14 +86,19 @@ MainWidget::~MainWidget()
     // Make sure the context is current when deleting the texture
     // and the buffers.
     makeCurrent();
-    //delete graphscene;
-    delete mesh;
+    delete cubeMesh;
+    delete sphereMesh;
+    delete texture_sun;
+    delete texture_earth;
+    delete texture_moon;
     doneCurrent();
 }
 
 //! [1]
 void MainWidget::timerEvent(QTimerEvent *)
 {
+    sun->getTransform().getRotation().angle += 0.1f;
+    earth->getTransform().getRotation().angle += 0.5f;
     update();
 }
 //! [1]
@@ -107,13 +120,31 @@ void MainWidget::initializeGL()
     glEnable(GL_CULL_FACE);
 //! [2]
 
-    //graphscene = new GraphScene<GameObject>;
+    cubeMesh = new Mesh();
+    sphereMesh = new Mesh();
+    GeometryFactory::addCubeGeometry(cubeMesh);
+    GeometryFactory::addSphereGeometry(sphereMesh);
 
-    mesh = new Mesh();
-    GeometryFactory::addCubeGeometry(mesh);
+    GS = GraphScene();
 
-    test = GameObject(mesh, &program);
-    //test.setMesh(mesh);
+    sun = new GameObject(sphereMesh, &program, texture_sun);
+    earth = new GameObject(sphereMesh, &program, texture_earth);
+    moon = new GameObject(sphereMesh, &program, texture_moon);
+
+    sun->setScaleTransform(2.0f);
+    sun->setRotationTransform({QVector3D(0.0f, 1.0f, 0.0f), 0.0f});
+
+    earth->setScaleTransform(0.5f);
+    earth->setTranslationTransform(QVector3D(10.0f, 0.0f, 0.0f));
+    earth->setRotationTransform({QVector3D(0.0f, 1.0f, 0.0f), 0.0f});
+    earth->setRotationTransform({QVector3D(tan(23/180*M_PI), 1.0f, 0.0f), 0.0f});
+    sun->addChild(earth);
+
+    moon->setScaleTransform(0.2f);
+    moon->setTranslationTransform(QVector3D(10.0f, 0.0f, 0.0f));
+    earth->addChild(moon);
+
+    GS.addGameObject(sun);
 
     // Use QBasicTimer because its faster than QTimer
     timer.start(12, this);
@@ -143,7 +174,20 @@ void MainWidget::initShaders()
 //! [4]
 void MainWidget::initTextures()
 {
+    texture_sun = new QOpenGLTexture(QImage(":sun.png").mirrored());
+    texture_sun->setMinificationFilter(QOpenGLTexture::Nearest);
+    texture_sun->setMagnificationFilter(QOpenGLTexture::Linear);
+    texture_sun->setWrapMode(QOpenGLTexture::Repeat);
 
+    texture_earth = new QOpenGLTexture(QImage(":earth.jpg").mirrored());
+    texture_earth->setMinificationFilter(QOpenGLTexture::Nearest);
+    texture_earth->setMagnificationFilter(QOpenGLTexture::Linear);
+    texture_earth->setWrapMode(QOpenGLTexture::Repeat);
+
+    texture_moon = new QOpenGLTexture(QImage(":moon.jpg").mirrored());
+    texture_moon->setMinificationFilter(QOpenGLTexture::Nearest);
+    texture_moon->setMagnificationFilter(QOpenGLTexture::Linear);
+    texture_moon->setWrapMode(QOpenGLTexture::Repeat);
 }
 //! [4]
 
@@ -170,39 +214,12 @@ void MainWidget::paintGL()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 //! [6]
-    // Calculate model view transformation
-    QMatrix4x4 matrix;
-
     // Set modelview-projection matrix
-    program.setUniformValue("model_matrix", Model);
+    //program.setUniformValue("model_matrix", Model);
     program.setUniformValue("view_matrix", View);
     program.setUniformValue("projection_matrix", Projection);
 //! [6]
 //!
-std::cout << &mesh->getArrayBuf() << std::endl;
-std::cout << &mesh->getIndexBuf() << std::endl;
 
-    /*test.getMesh()->getArrayBuf().bind();
-    test.getMesh()->getIndexBuf().bind();
-
-    // Offset for position
-    quintptr offset = 0;
-
-    // Tell OpenGL programmable pipeline how to locate vertex position data
-    int vertexLocation = test.getShader()->attributeLocation("a_position");
-    test.getShader()->enableAttributeArray(vertexLocation);
-    test.getShader()->setAttributeBuffer(vertexLocation, GL_FLOAT, offset, 3, sizeof(VertexData));
-
-    // Offset for texture coordinate
-    offset += sizeof(QVector3D);
-
-    // Tell OpenGL programmable pipeline how to locate vertex texture coordinate data
-    int texcoordLocation = program.attributeLocation("a_texcoord");
-    test.getShader()->enableAttributeArray(texcoordLocation);
-    test.getShader()->setAttributeBuffer(texcoordLocation, GL_FLOAT, offset, 2, sizeof(VertexData));*/
-
-    // Draw geometry using indices from VBO 1
-   // glDrawElements(GL_TRIANGLE_STRIP, test.getMesh()->getSize(), GL_UNSIGNED_SHORT, 0);
-
-    test.draw();
+    GS.draw();
 }

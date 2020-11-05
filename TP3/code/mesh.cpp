@@ -3,7 +3,7 @@
 
 Mesh::Mesh() : indexBuf(QOpenGLBuffer::IndexBuffer)
 {
-    std::cout << "Mesh::Mesh()" << std::endl;
+    initializeOpenGLFunctions();
     arrayBuf.create();
     indexBuf.create();
 }
@@ -20,17 +20,16 @@ QOpenGLBuffer & Mesh::getIndexBuf()
 
 Mesh::~Mesh()
 {
-    std::cout << "Mesh::~Mesh()" << std::endl;
     arrayBuf.destroy();
     indexBuf.destroy();
 }
 
-unsigned int Mesh::getSize()
+int Mesh::getSize()
 {
     return size;
 }
 
-void Mesh::setSize(unsigned int i)
+void Mesh::setSize(int i)
 {
     size = i;
 }

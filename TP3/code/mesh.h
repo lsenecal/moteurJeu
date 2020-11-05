@@ -2,18 +2,19 @@
 #define MESH_H
 
 #include <QOpenGLBuffer>
+#include <QOpenGLFunctions_3_1>
 
-class Mesh
+class Mesh : public QOpenGLFunctions_3_1
 {
 public:
     Mesh();
     ~Mesh();
     QOpenGLBuffer & getArrayBuf();
     QOpenGLBuffer & getIndexBuf();
-    unsigned int getSize();
-    void setSize(unsigned int i);
+    int getSize();
+    void setSize(int i);
 private:
-    unsigned int size;
+    int size;
     QOpenGLBuffer arrayBuf;
     QOpenGLBuffer indexBuf;
 };

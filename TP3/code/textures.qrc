@@ -1,5 +1,9 @@
 <RCC>
     <qresource prefix="/">
-        <file>earth.png</file>
+        <file>sun.jpg</file>
+		<file>WoodCrate01.png</file>
+		<file>sun.png</file>
+		<file>earth.jpg</file>
+		<file>moon.jpg</file>
     </qresource>
 </RCC>

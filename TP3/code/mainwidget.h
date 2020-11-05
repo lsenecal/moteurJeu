@@ -71,8 +71,8 @@ class MainWidget : public QOpenGLWidget, protected QOpenGLFunctions_3_1
     Q_OBJECT
 
 public:
-    explicit MainWidget(QWidget *parent = 0);
-    ~MainWidget();
+    explicit MainWidget(QWidget *parent = nullptr);
+    ~MainWidget() override;
 
 protected:
     void timerEvent(QTimerEvent *e) override;
@@ -94,8 +94,18 @@ private:
     QMatrix4x4 View;
     QMatrix4x4 Projection;
 
-    GameObject test;
-    Mesh * mesh = nullptr;
+    GraphScene GS;
+
+    GameObject* earth;
+    GameObject* sun;
+    GameObject* moon;
+
+    Mesh * cubeMesh = nullptr;
+    Mesh * sphereMesh = nullptr;
+
+    QOpenGLTexture * texture_sun;
+    QOpenGLTexture * texture_earth;
+    QOpenGLTexture * texture_moon;
 
     int width = 1280;
     int height = 720;

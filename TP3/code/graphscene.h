@@ -2,22 +2,17 @@
 #define GRAPHSCENE_H
 
 #include <vector>
+#include <gameobject.h>
 
-template<class T>
-class Node {
-    std::vector<Node> nodes;
-    T& element;
-};
-
-template<class T>
 class GraphScene
 {
 public:
     GraphScene();
     void draw();
+    void addGameObject(GameObject* go);
     ~GraphScene();
 private:
-    std::vector<Node<T>> nodes;
+    std::vector<GameObject*> nodes;
 };
 
 #endif // GRAPHSCENE_H
