@@ -28,6 +28,7 @@ public:
     void setTranslationTransform(QVector3D transaltion);
     void setRotationTransform(Rotation rotation);
     void draw();
+    bool isActive;
 private:
     Transform transform;
     Mesh* mesh;
@@ -36,6 +37,7 @@ private:
     GameObject* parent = nullptr;
     QOpenGLTexture* texture = nullptr;
     QMatrix4x4 getGlobalModelMatrix();
+    bool isEmpty = false;
 };
 
 #endif // GAMEOBJECT_H

@@ -127,6 +127,36 @@ void MainWidget::initializeGL()
 
     GS = GraphScene();
 
+    /*sun_earth = new GameObject(nullptr, nullptr, nullptr);
+    earth_moon = new GameObject(nullptr, nullptr, nullptr);
+
+    sun_earth->setRotationTransform({QVector3D(0.0f, 1.0f, 0.0f), 0.0f});
+    earth_moon->setRotationTransform({QVector3D(0.0f, 1.0f, 0.0f), 0.0f});
+    earth_moon->setTranslationTransform(QVector3D(10.0f, 0.0f, 0.0f));
+
+    sun = new GameObject(sphereMesh, &program, texture_sun);
+    earth = new GameObject(sphereMesh, &program, texture_earth);
+    moon = new GameObject(sphereMesh, &program, texture_moon);
+
+    sun_earth->addChild(sun);
+    sun_earth->addChild(earth_moon);
+
+    earth_moon->addChild(earth);
+    earth_moon->addChild(moon);
+
+    sun->setScaleTransform(2.0f);
+    sun->setRotationTransform({QVector3D(0.0f, -1.0f, 0.0f), 0.0f});
+
+    earth->setScaleTransform(0.5f);
+
+    earth->setRotationTransform({QVector3D(0.0f, 1.0f, 0.0f), 0.0f});
+    earth->setRotationTransform({QVector3D(tan(23/180*M_PI), 1.0f, 0.0f), 0.0f});
+
+    moon->setScaleTransform(0.2f);
+    moon->setTranslationTransform(QVector3D(10.0f, 0.0f, 0.0f));
+
+    GS.addGameObject(sun_earth);*/
+
     sun = new GameObject(sphereMesh, &program, texture_sun);
     earth = new GameObject(sphereMesh, &program, texture_earth);
     moon = new GameObject(sphereMesh, &program, texture_moon);

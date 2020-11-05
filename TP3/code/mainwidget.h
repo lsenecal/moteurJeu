@@ -100,6 +100,9 @@ private:
     GameObject* sun;
     GameObject* moon;
 
+    GameObject* sun_earth;
+    GameObject* earth_moon;
+
     Mesh * cubeMesh = nullptr;
     Mesh * sphereMesh = nullptr;
 

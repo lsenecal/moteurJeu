@@ -15,6 +15,8 @@ GameObject::GameObject()
 GameObject::GameObject(Mesh* m, QOpenGLShaderProgram* s) : mesh(m), shaders(s)
 {
     initializeOpenGLFunctions();
+    if (m == nullptr && s == nullptr)
+        isEmpty = true;
 }
 
 GameObject::GameObject(Transform t, Mesh* m, QOpenGLShaderProgram* s) : GameObject(m, s)
@@ -88,35 +90,38 @@ QMatrix4x4 GameObject::getGlobalModelMatrix()
 
 void GameObject::draw()
 {
-    texture->bind(0);
-    shaders->bind();
+    if (isActive) {
+        if (!isEmpty) {
+            texture->bind(0);
+            shaders->bind();
 
-    shaders->setUniformValue("texture_surface", 0);
+            shaders->setUniformValue("texture_surface", 0);
 
-    shaders->setUniformValue("model_matrix", getGlobalModelMatrix());
+            shaders->setUniformValue("model_matrix", getGlobalModelMatrix());
 
-    this->mesh->getArrayBuf().bind();
-    this->mesh->getIndexBuf().bind();
+            this->mesh->getArrayBuf().bind();
+            this->mesh->getIndexBuf().bind();
 
-    // Offset for position
-    quintptr offset = 0;
+            // Offset for position
+            quintptr offset = 0;
 
-    // Tell OpenGL programmable pipeline how to locate vertex position data
-    int vertexLocation = shaders->attributeLocation("a_position");
-    shaders->enableAttributeArray(vertexLocation);
-    shaders->setAttributeBuffer(vertexLocation, GL_FLOAT, offset, 3, sizeof(QVector3D));
+            // Tell OpenGL programmable pipeline how to locate vertex position data
+            int vertexLocation = shaders->attributeLocation("a_position");
+            shaders->enableAttributeArray(vertexLocation);
+            shaders->setAttributeBuffer(vertexLocation, GL_FLOAT, offset, 3, sizeof(QVector3D));
 
-    // Offset for texture coordinate
-    offset += sizeof(QVector3D);
+            // Offset for texture coordinate
+            offset += sizeof(QVector3D);
 
-    // Tell OpenGL shadersmable pipeline how to locate vertex texture coordinate data
-    //int texcoordLocation = shaders->attributeLocation("a_tbexcoord");
-    //shaders->enableAttributeArray(texcoordLocation);
-    //shaders->setAttributeBuffer(texcoordLocation, GL_FLOAT, static_cast<int>(offset), 2, sizeof(VertexData));
+            // Tell OpenGL shadersmable pipeline how to locate vertex texture coordinate data
+            //int texcoordLocation = shaders->attributeLocation("a_tbexcoord");
+            //shaders->enableAttributeArray(texcoordLocation);
+            //shaders->setAttributeBuffer(texcoordLocation, GL_FLOAT, static_cast<int>(offset), 2, sizeof(VertexData));
 
-    // Draw geometry using indices from VBO 1
-    glDrawElements(GL_TRIANGLE_STRIP, this->mesh->getSize(), GL_UNSIGNED_SHORT, nullptr);
-
-    for (GameObject* c : childrens)
-        c->draw();
+            // Draw geometry using indices from VBO 1
+            glDrawElements(GL_TRIANGLE_STRIP, this->mesh->getSize(), GL_UNSIGNED_SHORT, nullptr);
+        }
+        for (GameObject* c : childrens)
+            c->draw();
+    }
 }
