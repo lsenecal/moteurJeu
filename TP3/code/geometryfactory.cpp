@@ -162,14 +162,14 @@ void GeometryFactory::addPlaneGeometry(Mesh *mesh)
 
     for (size_t j = 0; j < n-1; ++j) {
         if (j != 0){
-            planeIndices.push_back(static_cast<int>(j)*n + n);
+            planeIndices.push_back(static_cast<GLushort>(j*n + n));
         }
         for (size_t i = 0; i < n; ++i) {
-            planeIndices.push_back(static_cast<int>(j)*n + static_cast<int>(i) + n);
-            planeIndices.push_back(static_cast<int>(j)*n + static_cast<int>(i));
+            planeIndices.push_back(static_cast<GLushort>(j*n + i + n));
+            planeIndices.push_back(static_cast<GLushort>(j*n + i));
         }
         if(j != n-2){
-            planeIndices.push_back((static_cast<int>(j)+1)*n - 1);
+            planeIndices.push_back(static_cast<GLushort>((j+1)*n - 1));
         }
     }
 
@@ -185,10 +185,11 @@ void GeometryFactory::addPlaneGeometry(Mesh *mesh)
 
 void GeometryFactory::addSphereGeometry(Mesh * mesh)
 {
-    std::vector<QVector3D> vertices;
+    //std::vector<QVector3D> vertices;
+    std::vector<VertexData> vertices;
     std::vector<GLushort> indices;
 
-    QFile qFile(":sphere.off");
+    /*QFile qFile(":sphere.off");
     if (!qFile.open(QIODevice::ReadOnly | QIODevice::Text))
            assert(false);
 
@@ -204,6 +205,8 @@ void GeometryFactory::addSphereGeometry(Mesh * mesh)
     int vsize = fields[0].toInt();
     int isize = fields[1].toInt();
 
+    float PI = 3.14159265358979f;
+
     for (int i = 0; i < vsize; ++i)
     {
         line = qFile.readLine();
@@ -213,8 +216,13 @@ void GeometryFactory::addSphereGeometry(Mesh * mesh)
         x = fields[0].toFloat();
         y = fields[1].toFloat();
         z = fields[2].toFloat();
-        QVector3D v = QVector3D(x, y, z);
-        vertices.push_back(v);
+        VertexData vertex;
+        vertex.position = QVector3D(x, y, z);
+        QVector3D n = vertex.position;
+        float u = atan2f(n.x(), n.z()) / (2.0f*PI) + 0.5f;
+        float v = n.y() * 0.5f + 0.5f;
+        vertex.texCoord = QVector2D(0.0f, 0.0f);
+        vertices.push_back(vertex);
     }
 
     for (int i = 0; i < isize; ++i)
@@ -222,24 +230,27 @@ void GeometryFactory::addSphereGeometry(Mesh * mesh)
         line = qFile.readLine();
         line = line.chopped(1);
         fields = line.split(" ");
-        indices.push_back(fields[0].toInt());
-        indices.push_back(fields[1].toInt());
-        indices.push_back(fields[2].toInt());
+        indices.push_back(fields[0].toUShort());
+        indices.push_back(fields[1].toUShort());
+        indices.push_back(fields[2].toUShort());
     }
 
-    qFile.close();
+    qFile.close();*/
 
 
-    /*QFile qFile(":sphere.obj");
-        if (!qFile.open(QIODevice::ReadOnly | QIODevice::Text))
-               assert(false);
+    QFile qFile(":sphere2.obj");
+    if (!qFile.open(QIODevice::ReadOnly | QIODevice::Text))
+        assert(false);
 
     QString line = qFile.readLine();
     line = qFile.readLine();
     line = qFile.readLine();
     line = qFile.readLine();
 
-    int i = 0;
+    unsigned short indice = 0;
+
+    std::vector<QVector3D> positions;
+    std::vector<QVector2D> uvs;
 
     while(!qFile.atEnd()) {
         line = qFile.readLine();
@@ -247,40 +258,128 @@ void GeometryFactory::addSphereGeometry(Mesh * mesh)
         QStringList fields = line.split(" ");
 
         if (fields[0] == 'v') {
-            VertexData v;
-            v.position = QVector3D(fields[1].toFloat(), fields[2].toFloat(), fields[3].toFloat());
-            vertices.push_back(v);
+            positions.push_back(QVector3D(fields[1].toFloat(), fields[2].toFloat(), fields[3].toFloat()));
         }
-        else if (fields[0] == 'vt') {
-            QVector2D tex = QVector2D(fields[1].toFloat(), fields[2].toFloat());
-            vertices[i].texCoord = tex;
-            i++;
+        else if (fields[0] == "vt") {
+            uvs.push_back(QVector2D(fields[1].toFloat(), fields[2].toFloat()));
         }
-        else if (fields[0] == 'vn') {
+        else if (fields[0] == "vn") {
 
         }
         else if (fields[0] == 'f') {
-            for (int j = 1; j < fields.size(); ++j) {
-                QString tri = fields[j];
-                qDebug() << tri;
-                QStringList indices = tri.split('/');
-                indices.push_back(indices[0]);
-                indices.push_back(indices[1]);
-                indices.push_back(indices[2]);
+            if (fields.size() == 4) { // Triangle
+                for (int j = 1; j < fields.size(); ++j) {
+                    QString tri = fields[j];
+                    QStringList list = tri.split('/');
+                    unsigned long long ind_p = list[0].toULongLong() - 1;
+                    unsigned long long ind_uv = list[1].toULongLong() - 1;
+
+                    VertexData v;
+                    v.position = positions[ind_p];
+                    v.texCoord = uvs[ind_uv];
+
+                    vertices.push_back(v);
+                    indices.push_back(indice);
+                    indice++;
+                }
+            }
+            else if (fields.size() == 5) { // Quad
+                for (int j = 1; j < fields.size(); ++j) {
+                    QString quad = fields[j];
+                    QStringList list = quad.split('/');
+                    unsigned long long ind_p = list[0].toULongLong() - 1;
+                    unsigned long long ind_uv = list[1].toULongLong() - 1;
+
+                    VertexData v;
+                    v.position = positions[ind_p];
+                    v.texCoord = uvs[ind_uv];
+
+                    vertices.push_back(v);
+                    indice++;
+                }
+                indices.push_back(indice-4);
+                indices.push_back(indice-3);
+                indices.push_back(indice-2);
+
+                indices.push_back(indice-4);
+                indices.push_back(indice-2);
+                indices.push_back(indice-1);
             }
         }
     }
 
     qFile.close();
 
-    */
+    /*int sectorCount = 36;
+    int stackCount = 18;
+
+    float PI = 3.14159265358979f;
+
+    float radius = 1.0f;
+
+    float sectorStep = 2.0f * PI / sectorCount;
+    float stackStep = PI / stackCount;
+    float stackAngle, sectorAngle;
+
+    float x, y, z, xy;
+    float s, t;
+
+    for (size_t i = 0; i <= stackCount; ++i)
+    {
+        stackAngle = PI / 2.0 - i * stackStep;
+        xy = radius * cosf(stackAngle);
+        z = radius * sinf(stackAngle);
+
+        for (size_t j = 0; j <= sectorCount; ++j)
+        {
+            sectorAngle = j * sectorStep;
+
+            x = xy * cosf(sectorAngle);
+            y = xy * sinf(sectorAngle);
+
+            s = (float)j / sectorCount;
+            t = (float)i / stackCount;
+
+            VertexData v;
+            v.position = { x, y, z };
+            v.texCoord = { s, t };
+
+            vertices.push_back(v);
+        }
+    }
+
+    int k1, k2;
+
+    for (size_t i = 0; i < stackCount; ++i)
+    {
+        k1 = i * (sectorCount + 1);
+        k2 = k1 + sectorCount + 1;
+
+        for (size_t j = 0; j < sectorCount; ++j, ++k1, ++k2)
+        {
+            if (i != 0)
+            {
+                indices.push_back(k1);
+                indices.push_back(k2);
+                indices.push_back(k1 + 1);
+            }
+
+            if (i != (stackCount + 1))
+            {
+                indices.push_back(k1 + 1);
+                indices.push_back(k2);
+                indices.push_back(k2 + 1);
+            }
+        }
+    }*/
+
 
     mesh->setSize(indices.size());
 
     mesh->getArrayBuf().bind();
-    mesh->getArrayBuf().allocate(vertices.data(), vertices.size() * sizeof(QVector3D));
+    mesh->getArrayBuf().allocate(vertices.data(), static_cast<int>(vertices.size() * sizeof(VertexData)));
 
     // Transfer index data to VBO 1
     mesh->getIndexBuf().bind();
-    mesh->getIndexBuf().allocate(indices.data(), indices.size() * sizeof(GLushort));
+    mesh->getIndexBuf().allocate(indices.data(), static_cast<int>(indices.size() * sizeof(GLushort)));
 }

@@ -64,6 +64,18 @@
 #include <QOpenGLTexture>
 #include <QWheelEvent>
 
+struct Camera {
+    QVector3D eye;
+    QVector3D lForward;
+    QVector3D lRight;
+    QVector3D lUp;
+
+    inline QVector3D getCenter()
+    {
+        return eye + lForward;
+    }
+};
+
 class GeometryEngine;
 
 class MainWidget : public QOpenGLWidget, protected QOpenGLFunctions_3_1
@@ -83,21 +95,22 @@ protected:
 
     void initShaders();
     void initTextures();
+    void rotateCamera(QVector2D mousePos);
 
 private:
     QBasicTimer timer;
     QOpenGLShaderProgram program;
 
-    //GraphScene<GameObject> * graphscene;
-
     QMatrix4x4 Model;
     QMatrix4x4 View;
     QMatrix4x4 Projection;
 
+    Camera camera;
+
     GraphScene GS;
 
-    GameObject* earth;
     GameObject* sun;
+    GameObject* earth;
     GameObject* moon;
 
     GameObject* sun_earth;
