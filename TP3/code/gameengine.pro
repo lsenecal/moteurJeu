@@ -11,15 +11,13 @@ SOURCES += main.cpp \
     transform.cpp
 
 SOURCES += \
-    mainwidget.cpp \
-    geometryengine.cpp
+    mainwidget.cpp
 
 HEADERS += \
     gameobject.h \
     geometryfactory.h \
     graphscene.h \
     mainwidget.h \
-    geometryengine.h \
     mesh.h \
     transform.h
 
