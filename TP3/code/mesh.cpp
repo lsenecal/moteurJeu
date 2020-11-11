@@ -24,12 +24,12 @@ Mesh::~Mesh()
     indexBuf.destroy();
 }
 
-int Mesh::getSize()
+unsigned long long Mesh::getSize()
 {
     return size;
 }
 
-void Mesh::setSize(int i)
+void Mesh::setSize(unsigned long long i)
 {
     size = i;
 }

@@ -11,10 +11,10 @@ public:
     ~Mesh();
     QOpenGLBuffer & getArrayBuf();
     QOpenGLBuffer & getIndexBuf();
-    int getSize();
-    void setSize(int i);
+    unsigned long long getSize();
+    void setSize(unsigned long long i);
 private:
-    int size;
+    unsigned long long size;
     QOpenGLBuffer arrayBuf;
     QOpenGLBuffer indexBuf;
 };
