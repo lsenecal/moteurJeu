@@ -14,6 +14,7 @@ GameObject::GameObject()
 
 GameObject::GameObject(Mesh* m, QOpenGLShaderProgram* s) : mesh(m), shaders(s)
 {
+    std::cout << "GameObject::GameObject()" << std::endl;
     initializeOpenGLFunctions();
     if (m == nullptr && s == nullptr)
         isEmpty = true;
@@ -57,6 +58,15 @@ QOpenGLShaderProgram* GameObject::getShader()
 void GameObject::setMesh(Mesh * mesh)
 {
     this->mesh = mesh;
+    if (!shaders && isEmpty)
+        isEmpty = false;
+}
+
+void GameObject::setShader(QOpenGLShaderProgram* shader)
+{
+    this->shaders = shader;
+    if (!mesh && isEmpty)
+        isEmpty = false;
 }
 
 void GameObject::addChild(GameObject* go)
@@ -90,8 +100,10 @@ QMatrix4x4 GameObject::getGlobalModelMatrix()
 
 void GameObject::draw()
 {
-    if (isActive) {
-        if (!isEmpty) {
+    if (isActive)
+    {
+        if (!isEmpty)
+        {
             texture->bind(0);
             shaders->bind();
 
@@ -108,18 +120,18 @@ void GameObject::draw()
             // Tell OpenGL programmable pipeline how to locate vertex position data
             int vertexLocation = shaders->attributeLocation("a_position");
             shaders->enableAttributeArray(vertexLocation);
-            shaders->setAttributeBuffer(vertexLocation, GL_FLOAT, offset, 3, sizeof(QVector3D));
+            shaders->setAttributeBuffer(vertexLocation, GL_FLOAT, offset, 3, sizeof(VertexData));
 
             // Offset for texture coordinate
             offset += sizeof(QVector3D);
 
             // Tell OpenGL shadersmable pipeline how to locate vertex texture coordinate data
-            //int texcoordLocation = shaders->attributeLocation("a_tbexcoord");
-            //shaders->enableAttributeArray(texcoordLocation);
-            //shaders->setAttributeBuffer(texcoordLocation, GL_FLOAT, static_cast<int>(offset), 2, sizeof(VertexData));
+            int texcoordLocation = shaders->attributeLocation("a_texcoord");
+            shaders->enableAttributeArray(texcoordLocation);
+            shaders->setAttributeBuffer(texcoordLocation, GL_FLOAT, static_cast<int>(offset), 2, sizeof(VertexData));
 
             // Draw geometry using indices from VBO 1
-            glDrawElements(GL_TRIANGLE_STRIP, this->mesh->getSize(), GL_UNSIGNED_SHORT, nullptr);
+            glDrawElements(GL_TRIANGLES, this->mesh->getSize(), GL_UNSIGNED_SHORT, nullptr);
         }
         for (GameObject* c : childrens)
             c->draw();
