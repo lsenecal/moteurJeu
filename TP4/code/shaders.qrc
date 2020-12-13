@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/">
+        <file>vshaderTerrain.glsl</file>
+        <file>fshaderTerrain.glsl</file>
+	<file>vshaderObj.glsl</file>
+        <file>fshaderObj.glsl</file>
+    </qresource>
+</RCC>
