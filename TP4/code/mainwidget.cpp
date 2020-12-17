@@ -58,11 +58,11 @@
 
 MainWidget::MainWidget(QWidget *parent) :
     QOpenGLWidget(parent),
-    geometries(nullptr),
+    terrain(nullptr),
+    object(nullptr),
     texture_grass(nullptr),
     texture_rock(nullptr),
-    texture_snow(nullptr),
-    heightMap(nullptr)
+    texture_snow(nullptr)
 {
     camera.eye = QVector3D(32.0, 20.0, 32.0);
     QVector3D center = QVector3D(0.0, 0.0, 0.0);
@@ -83,8 +83,8 @@ MainWidget::~MainWidget()
     delete texture_grass;
     delete texture_rock;
     delete texture_snow;
-    delete heightMap;
-    delete geometries;
+    delete terrain;
+    delete object;
     doneCurrent();
 }
 
@@ -186,8 +186,40 @@ void MainWidget::timerEvent(QTimerEvent *)
 
     moveObject(fFlag, bFlag, rFlag, lFlag, objPos, objDir, speed);
 
-    //std::cout << " Pos: " << objPos << std::endl;
-    //std::cout << " Dir: " << objDir << std::endl;
+    float size = terrain->getSize();
+    float half_size = size / 2;
+    float res = terrain->getRes();
+
+    QVector2D p1 = QVector2D(ceil((objPos.x() + half_size)/res), floor((objPos.z() + half_size)/res));
+    QVector2D p2 = QVector2D(floor((objPos.x() + half_size)/res), ceil((objPos.z() + half_size)/res));
+    QVector2D p3;
+
+    QVector2D q = QVector2D(floor(objPos.x()), floor(objPos.z()));
+    QVector2D r = QVector2D(ceil(objPos.x()), ceil(objPos.z()));
+
+    QVector2D objPos2D = QVector2D(objPos.x(), objPos.z());
+
+    if (objPos2D.distanceToPoint(q) < objPos2D.distanceToPoint(r))
+        p3 = QVector2D(floor((objPos.x() + half_size)/res), floor((objPos.z() + half_size)/res));
+    else
+        p3 = QVector2D(ceil((objPos.x() + half_size)/res), ceil((objPos.z() + half_size)/res));
+
+    QVector3D P1 = terrain->vertices[static_cast<int>(p1.x() + (size/res - p1.y())*size/res)].position;
+    QVector3D P2 = terrain->vertices[static_cast<int>(p2.x() + (size/res - p2.y())*size/res)].position;
+    QVector3D P3 = terrain->vertices[static_cast<int>(p3.x() + (size/res - p3.y())*size/res)].position;
+
+    QVector3D n = QVector3D::crossProduct(P2 - P1, P3 - P1);
+
+    QVector3D P = QVector3D(objPos.x(), 0.0f, objPos.z());
+    QVector3D PP1 = P1 - P;
+
+    float y = QVector3D::dotProduct(PP1, n) / n.y();
+
+    objPos.setY(y + object->getSize());
+
+    camera.eye = objPos - 5.0*objDir + 5.0*QVector3D(0.0f, 1.0f, 0.0f);
+    camera.lForward = objDir - QVector3D(0.0f, 1.0f, 0.0f);
+    camera.lUp = QVector3D(0.0f, 1.0f, 0.0f);
 
     update();
 }
@@ -210,7 +242,11 @@ void MainWidget::initializeGL()
     glEnable(GL_CULL_FACE);
 //! [2]
 
-    geometries = new GeometryEngine;
+    terrain = new GeometryEngine;
+    terrain->initAsPlaneGeometry(128, 64.0f, ":heightmap.png");
+
+    object = new GeometryEngine;
+    object->initAsSphereGeometry();
 
     // Use QBasicTimer because its faster than QTimer
     timer.start(12, this);
@@ -270,11 +306,6 @@ void MainWidget::initTextures()
     texture_snow->setMagnificationFilter(QOpenGLTexture::Nearest);
     texture_snow->setMagnificationFilter(QOpenGLTexture::Linear);
     texture_snow->setWrapMode(QOpenGLTexture::Repeat);
-
-    heightMap = new QOpenGLTexture(QImage(":heightmap.png"));
-    heightMap->setMinificationFilter(QOpenGLTexture::Nearest);
-    heightMap->setMagnificationFilter(QOpenGLTexture::Linear);
-    heightMap->setWrapMode(QOpenGLTexture::Repeat);
 }
 
 //! [5]
@@ -302,13 +333,15 @@ void MainWidget::paintGL()
     texture_grass->bind(0);
     texture_rock->bind(1);
     texture_snow->bind(2);
-    heightMap->bind(3);
 
 //! [6]
 
     // Bind shader pipeline for use
     if (!programTerrain.bind())
         close();
+
+    View.setToIdentity();
+    View.lookAt(camera.eye, camera.getCenter(), camera.lUp);
 
     // Set modelview-projection matrix
     programTerrain.setUniformValue("model_matrix", Model);
@@ -320,10 +353,9 @@ void MainWidget::paintGL()
     programTerrain.setUniformValue("texture_grass", 0);
     programTerrain.setUniformValue("texture_rock", 1);
     programTerrain.setUniformValue("texture_snow", 2);
-    programTerrain.setUniformValue("heightMap", 3);
 
-    // Draw cube geometry
-    geometries->drawPlaneGeometry(&programTerrain);
+    // Draw plane geometry
+    terrain->drawGeometry(&programTerrain);
 
     if (!programObj.bind())
         close();
@@ -336,15 +368,7 @@ void MainWidget::paintGL()
     programObj.setUniformValue("view_matrix", View);
     programObj.setUniformValue("projection_matrix", Projection);
 
-    QVector2D test = QVector2D((objPos[0] + 32.0f) / 64.0f, (objPos[2] + 32.0f) / 64.0f);
-
-    std::cout << test << std::endl;
-
-    programObj.setUniformValue("center", test);
-
-    programObj.setUniformValue("heightMap", 3);
-
-    geometries->drawSphereGeometry(&programObj);
+    object->drawGeometry(&programObj);
 }
 
 void moveCamera(bool fFlag, bool bFlag, bool rFlag, bool lFlag, Camera & cam, QMatrix4x4 & View, float speed)
@@ -413,9 +437,9 @@ void moveObject(bool fFlag, bool bFlag, bool rFlag, bool lFlag, QVector3D & objP
     float angleSpeed = 0.0f;
 
     if (rFlag)
-        angleSpeed = -0.5f;
+        angleSpeed = -1.0f;
     else if (lFlag)
-        angleSpeed = 0.5f;
+        angleSpeed = 1.0f;
 
     if (rFlag || lFlag){
         M.rotate(angleSpeed, QVector3D(0.0, 1.0, 0.0));

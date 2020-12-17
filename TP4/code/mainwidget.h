@@ -82,7 +82,7 @@ class MainWidget : public QOpenGLWidget, protected QOpenGLFunctions_3_1
     Q_OBJECT
 
 public:
-    explicit MainWidget(QWidget *parent = 0);
+    explicit MainWidget(QWidget *parent = nullptr);
     ~MainWidget();
 
 protected:
@@ -104,16 +104,17 @@ private:
     QBasicTimer timer;
     QOpenGLShaderProgram programTerrain;
     QOpenGLShaderProgram programObj;
-    GeometryEngine *geometries;
+
+    GeometryEngine *terrain;
+    GeometryEngine *object;
 
     QOpenGLTexture* texture_grass;
     QOpenGLTexture* texture_rock;
     QOpenGLTexture* texture_snow;
-    QOpenGLTexture* heightMap;
 
     Camera camera;
-    QVector3D objPos = QVector3D(0.0, 0.5, 0.0);
-    QVector3D objDir = QVector3D(0.0, 0.0, -1.0);
+    QVector3D objPos = QVector3D(0.1f, 0.5f, 1.2f);
+    QVector3D objDir = QVector3D(0.0f, 0.0f, -1.0f);
 
     QMatrix4x4 Model;
     QMatrix4x4 View;

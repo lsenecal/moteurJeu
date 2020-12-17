@@ -55,30 +55,38 @@
 #include <QOpenGLShaderProgram>
 #include <QOpenGLBuffer>
 
+enum Type {Cube, Plane, Sphere};
+
+struct VertexData
+{
+    QVector3D position;
+    QVector2D texCoord;
+};
+
 class GeometryEngine : protected QOpenGLFunctions_3_1
 {
 public:
     GeometryEngine();
     virtual ~GeometryEngine();
 
-    void drawCubeGeometry(QOpenGLShaderProgram *program);
-    void drawPlaneGeometry(QOpenGLShaderProgram *program);
-    void drawSphereGeometry(QOpenGLShaderProgram *program);
+    void drawGeometry(QOpenGLShaderProgram *program);
+    void initAsCubeGeometry();
+    void initAsPlaneGeometry(unsigned int n, float size);
+    void initAsPlaneGeometry(unsigned int n, float size, const QString &fileName);
+    void initAsSphereGeometry();
+    float getSize();
+    float getRes();
 
+    QVector<VertexData> vertices;
 private:
-    void initCubeGeometry();
-    void initPlaneGeometry();
-    void initSphereGeometry();
+    int vertexSize;
 
-    std::vector<int> vertexSize;
-    QOpenGLBuffer cubeArrayBuf;
-    QOpenGLBuffer cubeIndexBuf;
+    QOpenGLBuffer arrayBuf;
+    QOpenGLBuffer indexBuf;
 
-    QOpenGLBuffer planeArrayBuf;
-    QOpenGLBuffer planeIndexBuf;
-
-    QOpenGLBuffer sphereArrayBuf;
-    QOpenGLBuffer sphereIndexBuf;
+    Type type;
+    float size;
+    float res;
 };
 
 #endif // GEOMETRYENGINE_H
